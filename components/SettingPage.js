@@ -4,10 +4,18 @@ import {
   AppRegistry,
   Text,
   View,
-  ScrollView
+  ScrollView,
+  Switch
 } from 'react-native';
 
 export default class SettingPage extends Component{
+	constructor(props){
+		super(props);
+		this.state = {
+		    trueSwitchIsOn: true,
+		    falseSwitchIsOn: false,
+		  };
+	}
 	render(){
 		return(
 			<ScrollView style={{backgroundColor:'gray'}}>
@@ -25,8 +33,12 @@ export default class SettingPage extends Component{
 				</View>
 				</View>
 				<Text style={{fontSize:20}}>----Settings----</Text>
-				<View style={{padding:5, backgroundColor:'white'}}>
-				<Text>Share GPS:</Text>
+				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
+				<Text style={{fontSize: 20}}>Share GPS:</Text>
+				<Switch
+		          onValueChange={(value) => this.setState({trueSwitchIsOn: value})}
+		          style={{marginBottom: 10}}
+		          value={this.state.trueSwitchIsOn} />
 				</View>
 			</ScrollView>
 		);

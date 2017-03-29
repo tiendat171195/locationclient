@@ -16,25 +16,24 @@ import ScrollableTabView from 'react-native-scrollable-tab-view';
 import io from 'socket.io-client/dist/socket.io.js';
 
 import NewsFeedPage from './components/NewsFeedPage.js';
-import ChatRoomPage from './components/ChatRoom.js';
+import ChatRoomsPage from './components/ChatRoomsPage.js';
 import MapPage from './components/MapPage.js';
 import SettingPage from './components/SettingPage.js';
 
 
-
+import Login from './components/LogInScreen.js'
 export default class LocationClient extends Component {
-  constructor(props){
-    super(props);
-    
-  }
+  
   render() {
     return (
-      <ScrollableTabView locked={true}>
+      
+      /*<ScrollableTabView locked={true}>
         <NewsFeedPage tabLabel="NewsFeed" />
-        <ChatRoomPage tabLabel="Chat Room" />
+        <ChatRoomsPage tabLabel="Chat Room" />
         <MapPage tabLabel="Map" />
         <SettingPage tabLabel="Settings" />
-      </ScrollableTabView>
+      </ScrollableTabView>*/
+      <Login />
     );
   }
 }
