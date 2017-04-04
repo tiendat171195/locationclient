@@ -5,7 +5,8 @@ import {
   Text,
   View,
   ScrollView,
-  Switch
+  Switch,
+  TouchableOpacity,
 } from 'react-native';
 
 export default class SettingPage extends Component{
@@ -15,6 +16,14 @@ export default class SettingPage extends Component{
 		    trueSwitchIsOn: true,
 		    falseSwitchIsOn: false,
 		  };
+	}
+	_navigate(nextScreen){
+		this.props.navigator.push({
+			component: nextScreen,
+		})
+	}
+	showFriendsList(){
+
 	}
 	render(){
 		return(
@@ -40,6 +49,12 @@ export default class SettingPage extends Component{
 		          style={{marginBottom: 10}}
 		          value={this.state.trueSwitchIsOn} />
 				</View>
+				<TouchableOpacity onPress={()=>}>
+				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
+				<Text style={{fontSize: 20}}>Friends List</Text>
+				<Text style={{padding: 5}}>></Text>
+				</View>
+				</TouchableOpacity>
 			</ScrollView>
 		);
 	}

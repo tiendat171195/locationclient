@@ -5,7 +5,7 @@ import {
 	Text,
 	ScrollView,
 	TouchableOpacity,
-	Input
+	Input,
 } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 

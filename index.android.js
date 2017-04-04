@@ -2,12 +2,16 @@
 import React, { Component } from 'react';
 import {
   AppRegistry,
-  Navigator
+  Navigator,
 } from 'react-native';
 
 import Login from './components/LogInScreen.js'
 
 export default class LocationClient extends Component {
+  constructor(props){
+    super(props);
+    
+  }
   configureScene(route, routeStack){
     if(route.type === 'Modal') {
       return Navigator.SceneConfigs.FloatFromBottom
