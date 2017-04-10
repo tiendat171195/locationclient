@@ -49,7 +49,7 @@ export default class SettingPage extends Component{
 		          style={{marginBottom: 10}}
 		          value={this.state.trueSwitchIsOn} />
 				</View>
-				<TouchableOpacity onPress={()=>}>
+				<TouchableOpacity>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
 				<Text style={{fontSize: 20}}>Friends List</Text>
 				<Text style={{padding: 5}}>></Text>
