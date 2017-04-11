@@ -40,7 +40,7 @@ export default class NewsFeedPage extends Component{
 	}
 	render(){
 		return(
-			<ScrollView style={{flex:1}}>
+			<ScrollView style={{flex:1, backgroundColor:'silver'}}>
 				<ViewPagerAndroid style={{height:200}}>
 				<View style={{backgroundColor:'blue'}}></View>
 				<View style={{backgroundColor:'yellow'}}></View>

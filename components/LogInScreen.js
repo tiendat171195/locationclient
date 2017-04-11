@@ -99,21 +99,21 @@ export default class Login extends Component{
 				style={{height: 40, borderColor: 'gray', borderWidth: 1}}
 				onChangeText={(userName) => this.setState({userName})}
 				value={this.state.text}
-				placeholder="Input User Name">
+				placeholder="Nhập tên đăng nhập">
 			</TextInput>
 			<TextInput 
 				style={{height: 40, borderColor: 'gray', borderWidth: 1}}
 				onChangeText={(passWord) => this.setState({passWord})}
 				value={this.state.text}
-				placeholder="Input Pass Word" >
+				placeholder="Nhập mật khẩu" >
 			</TextInput>
 			<Button
 				onPress={() => this.SignIn()}
-				title="Sign In"
+				title="Đăng nhập"
 				color="#841584" />
 			<Button
 				onPress={() => this.SignUp()}
-				title="Sign Up"
+				title="Đăng ký"
 				color="#848384" />
 			</View>
 		);

@@ -27,8 +27,8 @@ export default class SettingPage extends Component{
 	}
 	render(){
 		return(
-			<ScrollView style={{backgroundColor:'gray'}}>
-				<View style={{margin:2, height: 170, flexDirection:'row', backgroundColor:'white'}}>
+			<ScrollView style={{backgroundColor:'silver'}}>
+				<View style={{height: 170, flexDirection:'row', backgroundColor:'white'}}>
 				<Avatar
 				containerStyle={{flex:2}}
 				  xlarge
@@ -38,15 +38,15 @@ export default class SettingPage extends Component{
 				  activeOpacity={0.7}
 				/>
 				<View style={{flex:2, marginLeft: 10}}>
-					<Text style={{fontWeight:'bold', fontSize: 20	}}>User Name:</Text>
+					<Text style={{fontWeight:'bold', fontSize: 20	}}>Tên đăng nhập:</Text>
 					<Text>{this.props.userInfo.username}</Text>
 					<Text style={{fontWeight:'bold', fontSize: 20	}}>ID:</Text>
 					<Text>{this.props.userInfo._id}</Text>
 				</View>
 				</View>
-				<Text style={{fontSize:20}}>----Settings----</Text>
+				<Text style={{fontSize:20}}>----Thiết lập----</Text>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
-				<Text style={{fontSize: 20}}>Share GPS:</Text>
+				<Text style={{fontSize: 20}}>Chia sẻ GPS:</Text>
 				<Switch
 		          onValueChange={(value) => this.setState({trueSwitchIsOn: value})}
 		          style={{marginBottom: 10}}
@@ -56,8 +56,8 @@ export default class SettingPage extends Component{
 					this._navigate(FriendsList, {'userInfo': this.props.userInfo}, 'Modal');
 				}}>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
-				<Text style={{fontSize: 20}}>Friends List</Text>
-				<Text style={{padding: 5}}>></Text>
+				<Text style={{fontSize: 20}}>Danh sách bạn bè</Text>
+				<Text style={{padding: 5, fontSize: 20}}>></Text>
 				</View>
 				</TouchableOpacity>
 			</ScrollView>

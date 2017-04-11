@@ -18,11 +18,11 @@ export default class MainScreen extends Component{
 	}
 	render(){
 		return (
-			<ScrollableTabView>
-		        <NewsFeedPage tabLabel="NewsFeed" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}} />
-		        <ChatRoomsPage tabLabel="Chat Room" navigator={this.props.navigator} {...this.props.userInfo}/>
-		        <MapPage tabLabel="Map" navigator={this.props.navigator} {...this.props.userInfo}/>
-		        <SettingPage tabLabel="Settings" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}}/>
+			<ScrollableTabView style={{backgroundColor:'orange'}}>
+		        <NewsFeedPage tabLabel="Tin tức" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}} />
+		        <ChatRoomsPage tabLabel="Trò chuyện" navigator={this.props.navigator} {...this.props.userInfo}/>
+		        <MapPage tabLabel="Bản đồ" navigator={this.props.navigator} {...this.props.userInfo}/>
+		        <SettingPage tabLabel="Thiết lập" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}}/>
 		    </ScrollableTabView>
 		);
 	}

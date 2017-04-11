@@ -65,11 +65,11 @@ export default class ChatRoomsPage extends Component{
 class ListRooms extends Component{
 	render(){
 		return(
-			<ScrollView style={{backgroundColor: 'gray', flex: 1}}>
-				<Text style={{fontSize:20}}>----Recent Room----</Text>
+			<ScrollView style={{backgroundColor: 'silver', flex: 1}}>
+				<Text style={{fontSize:20}}>----Phòng đang trò chuyện----</Text>
 				<ItemPage Title='Title1' Description='Descrip1' />
 				<ItemPage Title='Title2' Description='Descrip2' />
-				<Text style={{fontSize:20}}>----Public Room----</Text>
+				<Text style={{fontSize:20}}>----Phòng công cộng----</Text>
 				<ItemPage Title='Title3' Description='Descrip3' />
 				<ItemPage Title='Title4' Description='Descrip4' />
 				<ItemPage Title='Title5' Description='Descrip5' />

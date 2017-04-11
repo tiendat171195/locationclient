@@ -28,12 +28,12 @@ export default class FriendsList extends Component {
 	    var dialog = new DialogAndroid();
 	    dialog.set({
 	    	
-	      title: 'Add New Friend',
-	      content: 'Enter your friend\'s ID:',
-	      positiveText: 'Send Friend Request',
-	      negativeText: 'Cancel',
+	      title: 'Thêm bạn mới',
+	      content: 'Nhập ID của người muốn kết bạn:',
+	      positiveText: 'Gửi lời mời kết bạn',
+	      negativeText: 'Hủy',
 	      input: ({
-	      	hint: 'Your Friend\'s ID',
+	      	hint: 'ID của người muốn kết bạn',
 	      	callback: 
 	      		(inputText)=>{
 	      			console.log(inputText);
@@ -63,7 +63,7 @@ export default class FriendsList extends Component {
   		//fetch('http://192.168.73.2:3000/add_friend/'+ this.props.userInfo._id+'?'+user_id=?)
   	}
 	_navbar = <View style={{height:50, backgroundColor:'orange', flexDirection: 'row', justifyContent: 'space-between'}}>
-					<Button style={{backgroundColor:'none'}} title='Back' onPress={()=>{
+					<Button title='Trở về' onPress={()=>{
 					if (this.props.navigator.getCurrentRoutes().length > 1) {
 						this.props.navigator.pop();
 						return true // do not exit app
@@ -72,8 +72,8 @@ export default class FriendsList extends Component {
 					}
 				}} />
 				
-				<View ><Text style={{fontSize:40}}>Title</Text></View>
-				<Button style={{}} title='Add' onPress={this.showDialog.bind(this)} />
+				<View ><Text style={{fontSize:40}}>Friends List</Text></View>
+				<Button title='Thêm bạn' onPress={this.showDialog.bind(this)} />
 				</View>;
 		
 	render(){
@@ -88,8 +88,8 @@ export default class FriendsList extends Component {
 				          key={i}
 				          roundAvatar
 				          title={u.name}
-				          avatar={{uri:u.avatar}} />
-
+				          avatar={{uri:u.avatar}}
+				          onPress={()=>console.log('Clicked')} />
 				      )
 				    })
 				  }
