@@ -13,29 +13,30 @@ import MainScreen from './MainScreen.js';
 export default class Login extends Component{
 	constructor(props){
 		super(props);
-
 		//Handle Back Android
 		BackAndroid.addEventListener("hardwareBackPress", () => {
 			if (this.props.navigator.getCurrentRoutes().length > 1) {
-			console.log("back pressed");
-			this.props.navigator.pop();
-			return true // do not exit app
+				console.log("back pressed");
+				this.props.navigator.pop();
+				return true // do not exit app
 			} else {
-			return false // exit app
+				return false // exit app
 			}
 	    })
 
 		//For test
-		this._navigate(MainScreen);
+		//this._navigate(MainScreen);
 		////////////////////
 		this.state = {
 			userName: '',
 			passWord: ''
 		};
 	}
-	_navigate(nextScreen){
+	_navigate(nextScreen, props, type='normal'){
 		this.props.navigator.push({
 			component: nextScreen,
+			passProps: props,
+
 		})
 	}
 	SignIn(){
@@ -57,7 +58,7 @@ export default class Login extends Component{
 				responseData.message
 			);
 			if(responseData.status === "success"){
-				this._navigate(MainScreen);
+				this._navigate(MainScreen, {'userInfo': responseData.userInfo});
 			}
 		})
 		.catch((error) => {

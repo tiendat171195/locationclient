@@ -10,7 +10,6 @@ import Login from './components/LogInScreen.js'
 export default class LocationClient extends Component {
   constructor(props){
     super(props);
-    
   }
   configureScene(route, routeStack){
     if(route.type === 'Modal') {

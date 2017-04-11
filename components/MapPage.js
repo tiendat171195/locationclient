@@ -6,6 +6,9 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 export default class MapPage extends Component {
+	constructor(props){
+		super(props);
+	}
 	render(){
 		return(
 			<MapView style={{flex:1}}>

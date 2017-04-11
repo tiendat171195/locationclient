@@ -12,13 +12,17 @@ import MapPage from './MapPage.js';
 import SettingPage from './SettingPage.js'
 
 export default class MainScreen extends Component{
+	constructor(props){
+		super(props);
+		console.log("Main: ", props.userInfo);
+	}
 	render(){
 		return (
 			<ScrollableTabView>
-		        <NewsFeedPage tabLabel="NewsFeed" navigator={this.props.navigator} />
-		        <ChatRoomsPage tabLabel="Chat Room" navigator={this.props.navigator}/>
-		        <MapPage tabLabel="Map" navigator={this.props.navigator}/>
-		        <SettingPage tabLabel="Settings" navigator={this.props.navigator}/>
+		        <NewsFeedPage tabLabel="NewsFeed" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}} />
+		        <ChatRoomsPage tabLabel="Chat Room" navigator={this.props.navigator} {...this.props.userInfo}/>
+		        <MapPage tabLabel="Map" navigator={this.props.navigator} {...this.props.userInfo}/>
+		        <SettingPage tabLabel="Settings" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}}/>
 		    </ScrollableTabView>
 		);
 	}

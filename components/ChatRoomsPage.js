@@ -29,7 +29,9 @@ class ItemPage extends Component{
 }
 var myNavigator;
 export default class ChatRoomsPage extends Component{
-	
+	constructor(props){
+		super(props);
+	}
 	renderScene(route, navigator){
 		myNavigator = navigator;
 		switch(route.name){
