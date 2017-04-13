@@ -7,8 +7,12 @@ import {
 	Image,
 	TextInput,
 	Button,
-	Alert
+	Alert,
+	Dimensions
 } from 'react-native';
+const { width, height } = Dimensions.get('window');
+const ASPECT_RATIO = width / height;
+
 class Comment extends Component {
 	render(){
 		return(
@@ -32,12 +36,17 @@ export default class NewsDetail extends Component {
 			recentComment: '',
 			CommentsContent: [],
 		}
-		fetch('http://192.168.73.2:3000/newfeed/58d5f105717c6320c0ee82cc', {"method": "GET"})
+		this.getDetail();
+
+	}
+	getDetail(){
+		console.log(this.props._id);
+		fetch('http://192.168.73.2:3000/newfeed/'+this.props._id)
 		.then((response) => response.json())
 		.then((responseData) => {
 			//if(responseData.status === "success"){
 				this.setState({
-					title: responseData.title + "đasdasfasfasfascascascascascas",
+					title: responseData.title,
 					imgUrl: responseData.image,
 					descrip: responseData.description,
 					location: responseData.location,
@@ -51,11 +60,9 @@ export default class NewsDetail extends Component {
 			return null;
 		})
 		.done();
-
 	}
-	
 	postComment(){
-		fetch('http://192.168.73.2:3000/comment/?newfeed_id=58d5f105717c6320c0ee82cc', 
+		fetch('http://192.168.73.2:3000/comment/?newfeed_id=' + this.props._id, 
 			{method: "POST",
 			headers: {
 				'Accept': 'application/json',
@@ -67,11 +74,7 @@ export default class NewsDetail extends Component {
 		})
 		.then((response) => response.json())
 		.then((responseData) => {
-			Alert.alert(
-				"Done!",
-				'Done'
-			);
-			
+			this.forceUpdate();
 		})
 		.catch((error) => {
 	        console.error(error);
@@ -80,48 +83,46 @@ export default class NewsDetail extends Component {
 		.done();
 	}
 	render(){
-		for (let i = this.state.comments.length - 1; i >= 0; i--) {
-			this.state.CommentsContent.push(<View key={i}>
-			<Text>{this.state.comments[i].description}</Text>
-			</View>);
-		}
+		
 		return(
 			<ScrollView>
-				<View style={{flex:1, flexDirection: 'row', backgroundColor: 'white'}}>
-					<View style={{flex:2}}>
-						<Image
-						
-						style={{flex:1}}
-						source={{uri:this.state.imgUrl}} />
-						
-					</View>
-					<View style={{flex:5}}>
-						<Text style={{fontSize: 50}}>
-							{this.state.title}
-						</Text>
-					</View>
-				</View>
-				<View>
-					<Text style={{fontSize: 35}}>
-						{this.state.descrip}
-					</Text>
-				</View>
-				
-				{this.state.CommentsContent}
-
+				<Image
+				style={{height:height/4}}
+				source={{uri: this.state.imgUrl}} />
+				<Text style={{fontWeight:'bold', fontSize: 40}}>
+					{this.state.title}
+				</Text>
+				<Text style={{fontSize: 25}}>
+					{this.state.descrip}
+				</Text>
+				<Text>************</Text>
+				<Text style={{fontSize:30}}>Bình luận:</Text>
 				<View style={{flex:1, flexDirection:'row'}}>
 				<TextInput 
 					style={{flex:5, height: 40, borderColor: 'gray', borderWidth: 1}} 
-					placeholder="Write a comment"
+					placeholder="Nhập bình luận của bạn..."
 					onChangeText={(recentComment) => this.setState({recentComment})}
 					value={this.state.text} />
 
 				<Button
-					onPress={() => this.postComment()}
-					title="Send"
+					onPress={() => {
+						this.state.text = '';
+						this.postComment();
+					}}
+					title="Gửi"
 					color="#841584" 
 					style={{flex:1}}/>
 				</View>
+				{
+					this.state.comments.map((u, i) => {
+						return(
+							<View key={i}>
+							<Text>{u.description}</Text>
+							</View>
+						)
+					})
+				}
+				
 			</ScrollView>
 		);
 	}
