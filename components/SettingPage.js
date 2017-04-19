@@ -6,17 +6,25 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  Dimensions
 } from 'react-native';
-import FriendsList from './FriendsList.js'
-import {Avatar} from 'react-native-elements'
+
+import FriendsList from './FriendsList.js';
+import Login from './LogInScreen.js';
+import {Avatar, Button} from 'react-native-elements';
+import apis from '../apis/api.js';
+
+const { width, height } = Dimensions.get('window');
+const ASPECT_RATIO = width / height;
+
 export default class SettingPage extends Component{
 	constructor(props){
 		super(props);
-		console.log(props.userInfo);
 		this.state = {
 		    trueSwitchIsOn: true,
 		    falseSwitchIsOn: false,
 		  };
+		this.SignOut = this.SignOut.bind(this);
 	}
 	_navigate(nextScreen, props, type='normal'){
 		this.props.navigator.push({
@@ -25,24 +33,29 @@ export default class SettingPage extends Component{
 			type: type
 		})
 	}
+	SignOut(){
+		apis.SignOut();
+		for (var index = 0; index < this.props.navigator.getCurrentRoutes().length-1; index++) {
+			this.props.navigator.pop();
+		}
+	}
 	render(){
 		return(
 			<ScrollView style={{backgroundColor:'silver'}}>
-				<View style={{height: 170, flexDirection:'row', backgroundColor:'white'}}>
-				<Avatar
-				containerStyle={{flex:2}}
-				  xlarge
-				  rounded
-				  source={{uri: "https://s3.amazonaws.com/uifaces/faces/twitter/adhamdannaway/128.jpg"}}
-				  onPress={() => console.log("Works!")}
-				  activeOpacity={0.7}
-				/>
-				<View style={{flex:2, marginLeft: 10}}>
-					<Text style={{fontWeight:'bold', fontSize: 20	}}>Tên đăng nhập:</Text>
-					<Text>{this.props.userInfo.username}</Text>
-					<Text style={{fontWeight:'bold', fontSize: 20	}}>ID:</Text>
-					<Text>{this.props.userInfo._id}</Text>
-				</View>
+				<View style={{height: height/3.5, flexDirection:'row', backgroundColor:'white'}}>
+					<Avatar
+						containerStyle={{flex:2}}
+						xlarge
+						rounded
+						source={{uri: "https://s3.amazonaws.com/uifaces/faces/twitter/adhamdannaway/128.jpg"}}
+						onPress={() => {}}
+						activeOpacity={0.7}/>
+					<View style={{flex:3, marginLeft: 10}}>
+						<Text style={{fontWeight:'bold', fontSize: 20	}}>Tên đăng nhập:</Text>
+						<Text>{this.props.userInfo.username}</Text>
+						<Text style={{fontWeight:'bold', fontSize: 20	}}>ID:</Text>
+						<Text>{this.props.userInfo._id}</Text>
+					</View>
 				</View>
 				<Text style={{fontSize:20}}>----Thiết lập----</Text>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
@@ -56,10 +69,16 @@ export default class SettingPage extends Component{
 					this._navigate(FriendsList, {'userInfo': this.props.userInfo}, 'Modal');
 				}}>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
-				<Text style={{fontSize: 20}}>Danh sách bạn bè</Text>
-				<Text style={{padding: 5, fontSize: 20}}>></Text>
+					<Text style={{fontSize: 20}}>Danh sách bạn bè</Text>
+					<Text style={{padding: 5, fontSize: 20}}>></Text>
 				</View>
 				</TouchableOpacity>
+				<Button
+					buttonStyle={{margin: 15}}
+					onPress={this.SignOut}
+					backgroundColor="red"
+					title="Đăng xuất"
+					color="white" />
 			</ScrollView>
 		);
 	}

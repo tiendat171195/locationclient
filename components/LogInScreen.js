@@ -3,13 +3,18 @@ import React, { Component } from 'react';
 import {
 	View,
 	TextInput,
+	Text,
 	Button,
 	Alert,
-	BackAndroid
+	BackAndroid,
+	Dimensions,
+	Image
 } from 'react-native';
+const { width, height } = Dimensions.get('window');
+const ASPECT_RATIO = width / height;
 
 import MainScreen from './MainScreen.js';
-
+import apis from '../apis/api.js';
 export default class Login extends Component{
 	constructor(props){
 		super(props);
@@ -36,85 +41,92 @@ export default class Login extends Component{
 		this.props.navigator.push({
 			component: nextScreen,
 			passProps: props,
-
+			type: type
 		})
 	}
-	SignIn(){
-		fetch('http://192.168.73.2:3000/auth/login', 
-			{"method": "POST",
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-			    username: this.state.userName,
-			    password: this.state.passWord,
-			})
-		})
-		.then((response) => response.json())
-		.then((responseData) => {
+	async SignIn(){
+		let responseAPI = await apis.SignIn(this.state.userName, this.state.passWord);
+		console.log(responseAPI);
+		if(responseAPI == null){
+			return;
+		} 
+		if(responseAPI.status == "success"){
+			this._navigate(MainScreen, {'userInfo': responseAPI.userInfo});
+		}
+		else{
 			Alert.alert(
-				responseData.status,
-				responseData.message
+				'Lỗi đăng nhập',
+				responseAPI.message
 			);
-			if(responseData.status === "success"){
-				this._navigate(MainScreen, {'userInfo': responseData.userInfo});
-			}
-		})
-		.catch((error) => {
-			console.error(error);
-			return null;
-		})
-		.done();
+		}
 	}
-	SignUp(){
-		fetch('http://192.168.73.2:3000/auth/register', 
-			{method: "post",
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-			    username: this.state.userName,
-			    password: this.state.passWord,
-			})
-		})
-		.then((response) => response.json())
-		.then((responseData) => {
+	async SignUp(){
+		let responseAPI = await apis.SignUp(this.state.userName, this.state.passWord);
+		if(responseAPI == null){
+			return;
+		} 
+		if(responseAPI.status == 'success'){
 			Alert.alert(
-				responseData.status,
-				responseData.message
-			);
-		})
-		.catch((error) => {
-	        console.error(error);
-	        return null;
-	    })
-		.done();
+				'Đăng ký thành công',
+				'Chúc mừng bạn đã đăng ký thành công'
+			)
+		}
+		else{
+			Alert.alert(
+				'Đăng ký thất bại',
+				'Đã xảy ra lỗi trong quá trình đăng ký. Vui lòng đăng ký lại'
+			)
+		}
+	}
+	checkUserInput(){
+		if(this.state.userName.length < 6){
+			return {status: 'error', message: 'Tên đăng nhập phải trên 6 ký tự'};
+		}
+		else if (this.state.passWord.length < 6) {
+			return {status: 'error', message: 'Mật khẩu phải trên 6 ký tự'};
+		}
+		return {status:'success'};
 	}
 	render(){
 		return(
-			<View>
-			<TextInput 
-				style={{height: 40, borderColor: 'gray', borderWidth: 1}}
-				onChangeText={(userName) => this.setState({userName})}
-				value={this.state.text}
-				placeholder="Nhập tên đăng nhập">
-			</TextInput>
-			<TextInput 
-				style={{height: 40, borderColor: 'gray', borderWidth: 1}}
-				onChangeText={(passWord) => this.setState({passWord})}
-				value={this.state.text}
-				placeholder="Nhập mật khẩu" >
-			</TextInput>
-			<Button
-				onPress={() => this.SignIn()}
-				title="Đăng nhập"
-				color="#841584" />
-			<Button
-				onPress={() => this.SignUp()}
-				title="Đăng ký"
-				color="#848384" />
+			<View style={{backgroundColor:'#fffacd'}}>
+				<Image
+					style={{height: height/2.5}}
+					resizeMode='center'
+					source={{uri: 'http://bikersaigon.net/wp-content/uploads/2016/08/logo.png'}} />
+				<Text style={{marginLeft: 20, fontWeight:'bold', fontSize: 25, color: '#00ffff'}}>Tên đăng nhập:</Text>
+				<TextInput 
+					style={{fontSize: 20, paddingLeft: 20}}
+					onChangeText={(userName) => this.setState({userName})}
+					value={this.state.text}
+					placeholder="Nhập tên đăng nhập">
+				</TextInput>
+				<Text style={{marginLeft: 20, fontWeight:'bold', fontSize: 25}}>Mật khẩu:</Text>
+				<TextInput 
+					style={{fontSize: 20, paddingLeft: 20}}
+					onChangeText={(passWord) => this.setState({passWord})}
+					value={this.state.text}
+					placeholder="Nhập mật khẩu"
+					secureTextEntry={true} >
+				</TextInput>
+				<Button
+					onPress={() => {
+						var checkInfo = this.checkUserInput();
+						if(checkInfo.status == 'error'){
+							Alert.alert(
+								'Lỗi đăng nhập',
+								checkInfo.message
+							);
+						}else{
+							this.SignIn()
+						}
+						}}
+					title="Đăng nhập"
+					color="#841584" />
+				<Button
+					onPress={() => this.SignUp()}
+					title="Đăng ký"
+					color="#848384" />
 			</View>
 		);
 	}

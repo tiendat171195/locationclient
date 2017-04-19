@@ -18,7 +18,7 @@ export default class MainScreen extends Component{
 	}
 	render(){
 		return (
-			<ScrollableTabView style={{backgroundColor:'orange'}}>
+			<ScrollableTabView locked={true} style={{backgroundColor:'orange'}}>
 		        <NewsFeedPage tabLabel="Tin tức" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}} />
 		        <ChatRoomsPage tabLabel="Trò chuyện" navigator={this.props.navigator} {...this.props.userInfo}/>
 		        <MapPage tabLabel="Bản đồ" navigator={this.props.navigator} {...this.props.userInfo}/>

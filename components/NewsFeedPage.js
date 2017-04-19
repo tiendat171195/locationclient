@@ -14,30 +14,8 @@ const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 
 import NewsDetail from './NewsDetail';
+import apis from '../apis/api.js';
 
-class HotNewsItemPage extends Component{
-	constructor(props){
-		super(props);
-	}
-	render(){
-		return(
-			
-				<View style={{flex:1}}>
-					<TouchableOpacity onPress={()=>{
-				console.log('Hot news pressed');
-			}}>
-						<Image
-							style={{flex:1}}
-							source={{uri: 'http://baodulich.net.vn/data/data/haubg/2017/hoat-dong-du-lich/4-2017/1%20(5).JPG' /*this.props.ImgUrl*/}}>
-							<View><Text>Title</Text></View>
-							<View><Text>Description</Text></View>
-						</Image>
-						</TouchableOpacity>
-				</View>
-			
-		);
-	}
-}
 class ItemPage extends Component{
 	constructor(props){
 		super(props);
@@ -74,23 +52,14 @@ export default class NewsFeedPage extends Component{
 		this.getNewsFeed();
 	}
 	
-	getNewsFeed(){
-		console.log('Get NewsFeed');
-		fetch('http://192.168.73.2:3000/newfeed')
-		.then((response) => response.json())
-		.then((responseData) => {
-			for (var i = responseData.newfeeds.length - 1; i >= 0; i--) {
-				this.state._newsfeed.push(
-					responseData.newfeeds[i]
-				)
-			};
-			this.forceUpdate();
-		})
-		.catch((error) => {
-			console.error(error);
-			return null;
-		})
-		.done();
+	async getNewsFeed(){
+		let responseAPI = await apis.getNewsFeed();
+		for (var i = responseAPI.newfeeds.length - 1; i >= 0; i--) {
+			this.state._newsfeed.push(
+				responseAPI.newfeeds[i]
+			)
+		};
+		this.forceUpdate();
 	}
 	render(){
 		return(

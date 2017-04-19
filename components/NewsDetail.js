@@ -13,6 +13,8 @@ import {
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 
+import apis from '../apis/api.js';
+
 class Comment extends Component {
 	render(){
 		return(
@@ -39,48 +41,20 @@ export default class NewsDetail extends Component {
 		this.getDetail();
 
 	}
-	getDetail(){
-		console.log(this.props._id);
-		fetch('http://192.168.73.2:3000/newfeed/'+this.props._id)
-		.then((response) => response.json())
-		.then((responseData) => {
-			//if(responseData.status === "success"){
-				this.setState({
-					title: responseData.title,
-					imgUrl: responseData.image,
-					descrip: responseData.description,
-					location: responseData.location,
-					rate: responseData.rate,
-					comments: responseData.comments,
-				});
-			//}
-		})
-		.catch((error) => {
-			console.error(error);
-			return null;
-		})
-		.done();
+	async getDetail(){
+		let responseAPI = await apis.getNewsDetail(this.props._id);
+		this.setState({
+			title: responseAPI.title,
+			imgUrl: responseAPI.image,
+			descrip: responseAPI.description,
+			location: responseAPI.location,
+			rate: responseAPI.rate,
+			comments: responseAPI.comments,
+		});	
 	}
 	postComment(){
-		fetch('http://192.168.73.2:3000/comment/?newfeed_id=' + this.props._id, 
-			{method: "POST",
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-			    description: this.state.recentComment,
-			})
-		})
-		.then((response) => response.json())
-		.then((responseData) => {
-			this.forceUpdate();
-		})
-		.catch((error) => {
-	        console.error(error);
-	        return null;
-	    })
-		.done();
+		let responseAPI = apis.postNewsComment(this.props._id, this.state.recentComment);
+		this.forceUpdate();
 	}
 	render(){
 		
