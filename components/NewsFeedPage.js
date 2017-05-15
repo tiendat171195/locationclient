@@ -8,7 +8,8 @@ import {
 	TouchableOpacity,
 	Navigator,
 	Image,
-	Dimensions
+	Dimensions,
+	RefreshControl
 } from 'react-native';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -28,7 +29,7 @@ class ItemPage extends Component{
 					passProps: this.props.info
 				});
 			}} >
-				<View style={{margin:2, height: height/5, flexDirection:'row', backgroundColor:'white'}}>
+				<View style={{margin:8, height: height/5, flexDirection:'row', backgroundColor:'white'}}>
 					<View style={{flex:1}}>
 						<Image
 							style={{flex:1}}
@@ -47,6 +48,7 @@ export default class NewsFeedPage extends Component{
 	constructor(props){
 		super(props);
 		this.state = {
+			isRefreshing: false,
 			_newsfeed: [],
 		}
 		this.getNewsFeed();
@@ -54,6 +56,9 @@ export default class NewsFeedPage extends Component{
 	
 	async getNewsFeed(){
 		let responseAPI = await apis.getNewsFeed();
+		this.setState({
+			_newsfeed: []
+		});
 		for (var i = responseAPI.newfeeds.length - 1; i >= 0; i--) {
 			this.state._newsfeed.push(
 				responseAPI.newfeeds[i]
@@ -61,9 +66,28 @@ export default class NewsFeedPage extends Component{
 		};
 		this.forceUpdate();
 	}
+	_onRefresh() {
+		this.setState({isRefreshing: true});
+		
+		setTimeout(()=>{
+			this.getNewsFeed();
+			this.setState({isRefreshing: false});
+			}, 2000);
+    
+  }
 	render(){
 		return(
-			<ScrollView style={{flex:1, backgroundColor:'silver'}}>
+			<ScrollView style={{flex:1, backgroundColor:'silver'}}
+			refreshControl={<RefreshControl
+            refreshing={this.state.isRefreshing}
+            onRefresh={this._onRefresh.bind(this)}
+            tintColor="#ff0000"
+            title="Loading..."
+            titleColor="#00ff00"
+            colors={['#ff0000', '#00ff00', '#0000ff']}
+            progressBackgroundColor="#ffff00"
+          />} >
+				
 				<ViewPagerAndroid style={{flex: 1,height:height/3}}>
 					{
 						this.state._newsfeed.map((u, i) => {
@@ -75,7 +99,6 @@ export default class NewsFeedPage extends Component{
 									});
 								}}>
 									<TouchableOpacity style={{flex:1}} activeOpacity={1} onPress={()=>{
-									console.log("pressed");
 									this.props.navigator.push({
 										component: NewsDetail,
 										passProps: u

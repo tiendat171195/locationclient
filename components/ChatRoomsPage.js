@@ -5,77 +5,105 @@ import {
 	Text,
 	ScrollView,
 	TouchableOpacity,
-	Navigator
+	Navigator,
+	StyleSheet,
+	RefreshControl
 } from 'react-native';
 
-import ChatRoom from './ChatRoom';
+import apis from '../apis/api.js';
 
-class ItemPage extends Component{
-	render(){
-		return(
-			<TouchableOpacity activeOpacity={0.6} onPress={() => myNavigator.push({name:"chatroom"})}>
-			<View style={{margin:2, height: 100, flexDirection:'row', backgroundColor:'white'}}>
-				<View style={{backgroundColor:'red', flex:1, borderRadius:50, marginRight: 20}}>
-					<Text style={{flex:1, textAlign:'center', textAlignVertical:'center', fontSize:30}}>Image</Text>
-				</View>
-				<View style={{flex:2, marginLeft: 10}}>
-					<Text style={{fontWeight:'bold', fontSize: 20	}}>{this.props.Title}</Text>
-					<Text>{this.props.Description}</Text>
-				</View>
-			</View>
-			</TouchableOpacity>
-		);
-	}
-}
-var myNavigator;
+import ChatRoom from './ChatRoom';
+import CreateRoom from './CreateRoom';
+import ActionButton from 'react-native-action-button';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { Card, ListItem, Button} from 'react-native-elements';
+
 export default class ChatRoomsPage extends Component{
 	constructor(props){
 		super(props);
-	}
-	renderScene(route, navigator){
-		myNavigator = navigator;
-		switch(route.name){
-			case "main": return <ListRooms /> ;
-			case "chatroom": return <ChatRoom /> ;
+		this.state = {
+			isRefreshing: false,
+			_roomList: [],
 		}
 	}
-	render(){
-		
-		return(
-			<Navigator
-		      initialRoute={{name:"main"}}
-		      renderScene={this.renderScene}
-		      /*navigationBar={
-     <Navigator.NavigationBar
-       routeMapper={{
-         LeftButton: (route, navigator, index, navState) =>
-          { return (<Text>Cancel</Text>); },
-         RightButton: (route, navigator, index, navState) =>
-           { return (<Text>Done</Text>); },
-         Title: (route, navigator, index, navState) =>
-           { return (<Text>Awesome Nav Bar</Text>); },
-       }}
-       
-	     />
-	  }*/
-		    />
-		);
+	_navigate(nextScreen, props, type='normal'){
+		this.props.navigator.push({
+			component: nextScreen,
+			passProps: props,
+			type: type
+		})
 	}
-}
-class ListRooms extends Component{
-	render(){
-		return(
-			<ScrollView style={{backgroundColor: 'silver', flex: 1}}>
-				<Text style={{fontSize:20}}>----Phòng đang trò chuyện----</Text>
-				<ItemPage Title='Title1' Description='Descrip1' />
-				<ItemPage Title='Title2' Description='Descrip2' />
-				<Text style={{fontSize:20}}>----Phòng công cộng----</Text>
-				<ItemPage Title='Title3' Description='Descrip3' />
-				<ItemPage Title='Title4' Description='Descrip4' />
-				<ItemPage Title='Title5' Description='Descrip5' />
-				<ItemPage Title='Title6' Description='Descrip6' />
-			</ScrollView>
-		);
+	async GetRoomList(UserID){
+		let responseAPI = await apis.getRoomList(UserID);
+		if(responseAPI == null){
+			return;
+		}
+		//console.log(responseAPI);
+		this.setState({
+			_roomList: []
+		});
+		for (var index = 0; index < responseAPI.groups.length; index++) {
+			this.state._roomList.push(responseAPI.groups[index]);
+		}
+		this.forceUpdate();
 	}
 	
+	componentWillMount(){
+		this.GetRoomList(this.props.userInfo._id);
+		
+	}
+	_onRefresh() {
+    this.setState({isRefreshing: true});
+    setTimeout(()=>{
+			this.GetRoomList(this.props.userInfo._id);
+    	this.setState({isRefreshing: false});
+		}, 2000);
+    
+  }
+	componentWillReceiveProps(){
+    console.log("componentWillReceiveProps");
+  }
+	render(){
+		return(
+			<View style={{flex:1}}>
+			<ScrollView style={{backgroundColor: 'silver', flex: 1}}
+				refreshControl={<RefreshControl
+            refreshing={this.state.isRefreshing}
+            onRefresh={this._onRefresh.bind(this)}
+            tintColor="#ff0000"
+            title="Loading..."
+            titleColor="#00ff00"
+            colors={['#ff0000', '#00ff00', '#0000ff']}
+            progressBackgroundColor="#ffff00"
+          />}>
+				
+				<Card containerStyle={{margin:0, padding: 0}} >
+				  {
+				    this.state._roomList.map((u, i) => {
+				      return (
+				        <ListItem
+				          key={i}
+				          roundAvatar
+				          title={u.name}
+				          avatar={{uri:"https://d30y9cdsu7xlg0.cloudfront.net/png/546908-200.png"}}
+				          onPress={()=>{this._navigate(ChatRoom, {"giobalThis": this.props.giobalThis, "groupInfo":{"group_id":u._id, "name": u.name}, 'userInfo': this.props.userInfo})}} />
+				      )
+				    })
+				  }
+				</Card>
+			</ScrollView>
+			<ActionButton buttonColor="rgba(231,76,60,1)">
+                <ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={()=>{this._navigate(CreateRoom, {'userInfo': this.props.userInfo})}}>
+                  <Icon name="md-create"/>
+                </ActionButton.Item>
+                <ActionButton.Item buttonColor='#3498db' title="Tìm địa điểm" onPress={() => {}}>
+                  <Icon name="md-notifications-off"/>
+                </ActionButton.Item>
+                <ActionButton.Item buttonColor='#1abc9c' title="Tìm bạn" onPress={() => {}}>
+                  <Icon name="md-done-all"/>
+                </ActionButton.Item>
+              </ActionButton>
+			</View>
+		);
+	}
 }

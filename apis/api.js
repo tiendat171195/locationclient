@@ -1,8 +1,15 @@
 import {
-	Alert
+	Alert,
+	AsyncStorage
 } from 'react-native';
 const API_path = 'http://192.168.83.2:3000/';
+var token = '';
+var user_id = '';
 var apis = {
+	updateUserInfo(_token, _id){
+			token = _token;
+			user_id = _id;
+	},
 	async SignUp(username, password){
 		try{
 			let response = await fetch(API_path + 'auth/register', 
@@ -37,9 +44,9 @@ var apis = {
 						password: password,
 				})
 			});
-      let responseJson = await response.json();
-      return responseJson;
-		}
+			let responseJson = await response.json();
+			return responseJson;
+				}
 		catch(error){
 			console.error(error);
 			return null;
@@ -47,7 +54,14 @@ var apis = {
 	},
 	async getNewsFeed(){
 		try{
-			let response = await fetch(API_path + 'newfeed');
+			let response = await fetch(API_path + 'newsfeeds',
+			{'method': 'GET',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -58,7 +72,14 @@ var apis = {
 	},
 	async SignOut(){
 		try{
-			let response = await fetch(API_path + 'auth/logout');
+			let response = await fetch(API_path + 'auth/logout',
+			{method: "GET",
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+			}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -69,7 +90,14 @@ var apis = {
 	},
 	async getNewsDetail(newsId){
 		try{
-			let response = await fetch(API_path + 'newfeed/'+newsId);
+			let response = await fetch(API_path + 'newsfeeds/'+newsId,
+			{'method': 'GET',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -85,6 +113,8 @@ var apis = {
 				headers: {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
 				},
 				body: JSON.stringify({
 						description: comment,
@@ -98,9 +128,16 @@ var apis = {
 			return null;
 		}
 	},
-	async getFriendsList(userId){
+	async getFriendsList(){
 		try{
-			let response = await fetch(API_path + 'friend/friend_list/' + userId);
+			let response = await fetch(API_path + 'friends/',
+			{'method': 'GET',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -109,9 +146,16 @@ var apis = {
 			return null;
 		}
 	},
-	async getFriendsRequestList(userId){
+	async getFriendsRequestList(){
 		try{
-			let response = await fetch(API_path + 'friend/friend_requests/' + userId);
+			let response = await fetch(API_path + 'friends/requests/',
+			{'method': 'GET',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -120,9 +164,16 @@ var apis = {
 			return null;
 		}
 	},
-	async addNewFriend(userId, friendId){
+	async addNewFriend(friendId){
 		try{
-			let response = await fetch(API_path + 'friend/add_friend/' + userId +'?user_id='+ friendId, {'method': 'POST'});
+			let response = await fetch(API_path + 'friends/' + friendId +'/add', 
+			{'method': 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -131,9 +182,16 @@ var apis = {
 			return null;
 		}
 	},
-	async acceptFriend(userId, friendId){
+	async acceptFriend(friendId){
 		try{
-			let response = await fetch(API_path + 'friend/accept_friend/' + userId +'?user_id='+ friendId, {'method': 'POST'});
+			let response = await fetch(API_path + 'friends/' + friendId + '/accept', 
+			{'method': 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				}});
 			let responseJson = await response.json();
 			return responseJson;
 		}
@@ -141,6 +199,69 @@ var apis = {
 			console.error(error);
 			return null;
 		}
-	}
+	},
+	async createNewRoom(RoomName){
+		try{
+			let response = await fetch(API_path + 'groups/', 
+			{method: "POST",
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				},
+				body: JSON.stringify({
+						group_name: RoomName,
+				})
+			});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async getRoomList(){
+		try{
+			let response = await fetch(API_path + 'groups/',
+			{method: "GET",
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+			}});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async addNewMember(GroupID, NewMemberID){
+		try{
+			let response = await fetch(API_path + 'groups/' + GroupID + '/members?friend_id=' + NewMemberID,
+			{method: "POST",
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					'user_id': user_id,
+				},
+				body: JSON.stringify({
+						group_id: GroupID,
+						friend_id: NewMemberID
+				})
+			});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch(error){
+			console.error(error);
+			return null;
+		}
+	},
 };
 module.exports = apis;

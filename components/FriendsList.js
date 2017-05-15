@@ -5,7 +5,8 @@ import {
 	View,
 	Text,
 	TouchableHighlight,
-	Alert
+	Alert,
+	ToolbarAndroid
 } from 'react-native';
 
 import DialogAndroid from 'react-native-dialogs';
@@ -16,19 +17,18 @@ import apis from '../apis/api.js';
 export default class FriendsList extends Component {
 	constructor(props){
 		super(props);
-		console.log('FriendList: ', props.userInfo);
 		this.state = {
-			_friendsList: [],
-			_friendsRequestList: [],
+			friends_list: [],
+			friends_request_list: [],
 		}
-
+		this.onActionSelected = this.onActionSelected.bind(this);
 	}
 	componentWillMount(){
 		this.getFriendsList();
 		this.getFriendRequestList();
 
 	}
-	showDialog = function () {
+	showAddFriendDialog = function () {
 	    var dialog = new DialogAndroid();
 	    dialog.set({
 	    	
@@ -42,81 +42,96 @@ export default class FriendsList extends Component {
 	      		(friendId)=>{
 	      			this.addNewFriend(friendId);
 	      		}
-	      })
+	      }),
 	    });
 	    dialog.show();
   	}
   	async getFriendsList(){
-  		let responseAPI = await apis.getFriendsList(this.props.userInfo._id);
-			for (var i = responseAPI.friend_list.length - 1; i >= 0; i--) {
-				this.state._friendsList.push({'name': responseAPI.friend_list[i], 'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
+  		let responseAPI = await apis.getFriendsList();
+			for (var i = responseAPI.friends.length - 1; i >= 0; i--) {
+				this.state.friends_list.push({'name': responseAPI.friends[i], 'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
 			};
 			this.forceUpdate();
   	}
   	async getFriendRequestList(){
-  		let responseAPI = await apis.getFriendsRequestList(this.props.userInfo._id);
+  		let responseAPI = await apis.getFriendsRequestList();
 			for (var i = responseAPI.friend_requests.length - 1; i >= 0; i--) {
-				this.state._friendsRequestList.push({'name': responseAPI.friend_requests[i], 'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
+				this.state.friends_request_list.push({'name': responseAPI.friend_requests[i], 'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
 			};
 			this.forceUpdate();
   	}
-  	addNewFriend(friendId){
-  		let responseAPI = apis.addNewFriend(this.props.userInfo._id, friendId);
-			Alert.alert(
-				"Thông báo",
-				'Yêu cầu kết bạn đã được gửi đến: '+responseAPI.username);
+  	async addNewFriend(friendId){
+  		try{
+				let responseAPI = await apis.addNewFriend(friendId);
+				Alert.alert(
+					"Thông báo",
+					'Yêu cầu kết bạn đã được gửi đến: '+responseAPI.username);
+			} catch(error){
+				console.error(error);
+			}
   	}
-  	acceptFriend(friendId){
-  		let responseAPI = apis.acceptFriend(this.props.userInfo._id, friendId);
-			Alert.alert(
-				"Thông báo",
-				'Bạn và '+responseAPI.username+' đã thành bạn bè!');
+  	async acceptFriend(friendId){
+  		try {
+				let responseAPI = await apis.acceptFriend(friendId);
+				console.log(responseAPI);
+				Alert.alert(
+					"Thông báo",
+					'Bạn và '+responseAPI.username+' đã thành bạn bè!');
+				}
+			catch(error){
+				console.error(error);
+			}
   	}
-	_navbar = <View style={{height:50, backgroundColor:'orange', flexDirection: 'row', justifyContent: 'space-between'}}>
-					<Button title='Trở về' onPress={()=>{
-					if (this.props.navigator.getCurrentRoutes().length > 1) {
-						this.props.navigator.pop();
-						return true // do not exit app
-					} else {
-						return false // exit app
-					}
-				}} />
-				
-				<View ><Text style={{fontSize:20}}>Friends List</Text></View>
-				<Button title='Thêm bạn' onPress={this.showDialog.bind(this)} />
-				</View>;
-		
+		onActionSelected(position) {
+			
+			switch (position) {
+				case 0:
+					this.showAddFriendDialog();
+					break;
+				case 1:
+					break;
+				default:
+					break;
+			}
+		}
 	render(){
 		return(
 			<ScrollView>
-				{this._navbar}
-				<Text>Friend List</Text>
+				<ToolbarAndroid
+				style={{height:50, backgroundColor:'orange'}}
+      navIcon={{uri:"http://semijb.com/iosemus/BACK.png", width:50, height:50}}
+      title="Danh sách bạn bè"
+      actions={[{title: 'Thêm người', icon: {uri:"https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-add-128.png"}, show: 'always'}]}
+      onIconClicked={()=>{this.props.navigator.pop();
+													return true }}
+			onActionSelected={this.onActionSelected} />
+				<Text>Bạn bè</Text>
 				<Card containerStyle={{margin:0, padding: 0}} >
 				  {
-				    this.state._friendsList.map((u, i) => {
+				    this.state.friends_list.map((friend, i) => {
 				      return (
 				        <ListItem
 				          key={i}
 				          roundAvatar
 				          hideChevron={true}
-				          title={u.name}
-				          avatar={{uri:u.avatar}}
+				          title={friend.name}
+				          avatar={{uri:friend.avatar}}
 				          onPress={()=>console.log('Clicked')} />
 				      )
 				    })
 				  }
 				</Card>
-				<Text>Friends Request</Text>
+				<Text>Yêu cầu kết bạn</Text>
 				<Card containerStyle={{margin:0, padding: 0}} >
 				  {
-				    this.state._friendsRequestList.map((u, i) => {
+				    this.state.friends_request_list.map((request, i) => {
 				      return (
 				        <ListItem
 				          key={i}
 				          roundAvatar
 				          hideChevron={true}
-				          title={u.name}
-				          avatar={{uri:u.avatar}}
+				          title={request.name}
+				          avatar={{uri:request.avatar}}
 				          subtitle={
 					          <View style={{justifyContent:'flex-end', flexDirection:'row'}}>
 					          	<Icon
@@ -125,8 +140,8 @@ export default class FriendsList extends Component {
 								  color='#f50'
 								  onPress={()=>{
 								  	console.log('i=:' + i);
-								  	this.state._friendsRequestList.splice(i, 1);
-								  	this.acceptFriend(u.name);
+								  	this.state.friends_request_list.splice(i, 1);
+								  	this.acceptFriend(request.name);
 								  	this.forceUpdate();
 								  }} />
 					            <Icon
@@ -134,7 +149,7 @@ export default class FriendsList extends Component {
 								  color='#f50'
 								  onPress={() => {
 
-								  	this.state._friendsRequestList.splice(i, 1);
+								  	this.state.friends_request_list.splice(i, 1);
 								  	//Call remove friend request api here...
 								  	this.forceUpdate();
 								  }} />

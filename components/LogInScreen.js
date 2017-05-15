@@ -8,16 +8,30 @@ import {
 	Alert,
 	BackAndroid,
 	Dimensions,
-	Image
+	Image,
+	AsyncStorage
 } from 'react-native';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 
 import MainScreen from './MainScreen.js';
+import TabBarExample from './MainScreen.js';
 import apis from '../apis/api.js';
 export default class Login extends Component{
 	constructor(props){
 		super(props);
+		
+
+		//For test
+		//this._navigate(MainScreen, {'userInfo': { _id: '58dc737f887acf2bc0a156fc',username: 'tiendat',token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1OGRjNzM3Zjg4N2FjZjJiYzBhMTU2ZmMiLCJpYXQiOjE0OTQwNTkwMzgsImV4cCI6MTQ5NDA2OTAzOH0.HOIjU2-c1WG_ImPIQXskx20gRQ2kEUCWoRW3YsqO4TY' }});
+		
+		////////////////////
+		this.state = {
+			username: '',
+			password: ''
+		};
+	}
+	componentWillMount(){
 		//Handle Back Android
 		BackAndroid.addEventListener("hardwareBackPress", () => {
 			if (this.props.navigator.getCurrentRoutes().length > 1) {
@@ -29,13 +43,7 @@ export default class Login extends Component{
 			}
 	    })
 
-		//For test
-		//this._navigate(MainScreen);
-		////////////////////
-		this.state = {
-			userName: '',
-			passWord: ''
-		};
+		this.checkLoggedIn();
 	}
 	_navigate(nextScreen, props, type='normal'){
 		this.props.navigator.push({
@@ -44,28 +52,37 @@ export default class Login extends Component{
 			type: type
 		})
 	}
-	async SignIn(){
-		let responseAPI = await apis.SignIn(this.state.userName, this.state.passWord);
-		console.log(responseAPI);
+	async SignIn(Username, Password){
+		let responseAPI = await apis.SignIn(Username, Password);
 		if(responseAPI == null){
 			return;
-		} 
-		if(responseAPI.status == "success"){
-			this._navigate(MainScreen, {'userInfo': responseAPI.userInfo});
+		}
+		//console.log(responseAPI);
+		
+		if(!responseAPI.hasOwnProperty('success')){
+			try {
+				await AsyncStorage.setItem('LOGGED_IN', 'true');
+				await AsyncStorage.setItem('USER_INFO', JSON.stringify({'user_id': responseAPI.user_id, 
+																		"username": responseAPI.username, 
+																		"password": Password, 
+																		"token":responseAPI.user_token}));
+			} catch (error) {
+				console.error(error);
+			}
+			apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
+			this._navigate(MainScreen, {'userInfo': {'token': responseAPI.user_token, 'user_id': responseAPI.user_id, 'username': responseAPI.username}});
 		}
 		else{
 			Alert.alert(
 				'Lỗi đăng nhập',
-				responseAPI.message
+				responseAPI.status_message
 			);
 		}
 	}
 	async SignUp(){
-		let responseAPI = await apis.SignUp(this.state.userName, this.state.passWord);
-		if(responseAPI == null){
-			return;
-		} 
-		if(responseAPI.status == 'success'){
+		let responseAPI = await apis.SignUp(this.state.username, this.state.password);
+		
+		if(!responseAPI.hasOwnProperty('success')){
 			Alert.alert(
 				'Đăng ký thành công',
 				'Chúc mừng bạn đã đăng ký thành công'
@@ -74,42 +91,57 @@ export default class Login extends Component{
 		else{
 			Alert.alert(
 				'Đăng ký thất bại',
-				'Đã xảy ra lỗi trong quá trình đăng ký. Vui lòng đăng ký lại'
+				responseAPI.status_message
 			)
 		}
 	}
 	checkUserInput(){
-		if(this.state.userName.length < 6){
+		if(this.state.username.length < 6){
 			return {status: 'error', message: 'Tên đăng nhập phải trên 6 ký tự'};
 		}
-		else if (this.state.passWord.length < 6) {
+		else if (this.state.password.length < 6) {
 			return {status: 'error', message: 'Mật khẩu phải trên 6 ký tự'};
 		}
 		return {status:'success'};
 	}
+	async checkLoggedIn(){
+		try {
+			const isLoggedIn = await AsyncStorage.getItem('LOGGED_IN');
+			if (isLoggedIn == 'true'){
+				var userInfo = await AsyncStorage.getItem('USER_INFO');
+				userInfo = JSON.parse(userInfo);
+				if(userInfo != null){
+					this.SignIn(userInfo.username, userInfo.password);
+				}
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	}
 	render(){
 		return(
-			<View style={{backgroundColor:'#fffacd'}}>
+			<View style={{backgroundColor:'#fffacd', flex:1}}>
 				<Image
 					style={{height: height/2.5}}
 					resizeMode='center'
 					source={{uri: 'http://bikersaigon.net/wp-content/uploads/2016/08/logo.png'}} />
-				<Text style={{marginLeft: 20, fontWeight:'bold', fontSize: 25, color: '#00ffff'}}>Tên đăng nhập:</Text>
+				<Text style={{marginLeft: 20, fontWeight:'bold', fontSize: 25}}>Tên đăng nhập:</Text>
 				<TextInput 
 					style={{fontSize: 20, paddingLeft: 20}}
-					onChangeText={(userName) => this.setState({userName})}
-					value={this.state.text}
+					onChangeText={(userName) => this.setState({username: userName})}
+					value={this.state.username}
 					placeholder="Nhập tên đăng nhập">
 				</TextInput>
 				<Text style={{marginLeft: 20, fontWeight:'bold', fontSize: 25}}>Mật khẩu:</Text>
 				<TextInput 
 					style={{fontSize: 20, paddingLeft: 20}}
-					onChangeText={(passWord) => this.setState({passWord})}
-					value={this.state.text}
+					onChangeText={(passWord) => this.setState({password: passWord})}
+					value={this.state.password}
 					placeholder="Nhập mật khẩu"
 					secureTextEntry={true} >
 				</TextInput>
 				<Button
+					style={{width: 50}}
 					onPress={() => {
 						var checkInfo = this.checkUserInput();
 						if(checkInfo.status == 'error'){
@@ -118,7 +150,7 @@ export default class Login extends Component{
 								checkInfo.message
 							);
 						}else{
-							this.SignIn()
+							this.SignIn(this.state.username, this.state.password);
 						}
 						}}
 					title="Đăng nhập"

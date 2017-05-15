@@ -6,7 +6,9 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  Image,
+  AsyncStorage
 } from 'react-native';
 
 import FriendsList from './FriendsList.js';
@@ -33,10 +35,19 @@ export default class SettingPage extends Component{
 			type: type
 		})
 	}
-	SignOut(){
-		apis.SignOut();
+	async SignOut(){
+		let responseAPI = await apis.SignOut();
+		if(responseAPI.success){
+			try {
+				await AsyncStorage.setItem('LOGGED_IN', 'false');
+				await AsyncStorage.removeItem('USER_INFO');
+				apis.updateUserInfo('', '');
+			} catch (error) {
+				console.error(error);
+			}
+		}
 		for (var index = 0; index < this.props.navigator.getCurrentRoutes().length-1; index++) {
-			this.props.navigator.pop();
+				this.props.navigator.pop();
 		}
 	}
 	render(){
@@ -47,16 +58,19 @@ export default class SettingPage extends Component{
 						containerStyle={{flex:2}}
 						xlarge
 						rounded
-						source={{uri: "https://s3.amazonaws.com/uifaces/faces/twitter/adhamdannaway/128.jpg"}}
+						source={{uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7"}}
 						onPress={() => {}}
 						activeOpacity={0.7}/>
 					<View style={{flex:3, marginLeft: 10}}>
 						<Text style={{fontWeight:'bold', fontSize: 20	}}>Tên đăng nhập:</Text>
 						<Text>{this.props.userInfo.username}</Text>
 						<Text style={{fontWeight:'bold', fontSize: 20	}}>ID:</Text>
-						<Text>{this.props.userInfo._id}</Text>
+						<Text>{this.props.userInfo.user_id}</Text>
 					</View>
 				</View>
+
+
+
 				<Text style={{fontSize:20}}>----Thiết lập----</Text>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
 				<Text style={{fontSize: 20}}>Chia sẻ GPS:</Text>
@@ -66,13 +80,20 @@ export default class SettingPage extends Component{
 		          value={this.state.trueSwitchIsOn} />
 				</View>
 				<TouchableOpacity onPress={()=>{
-					this._navigate(FriendsList, {'userInfo': this.props.userInfo}, 'Modal');
+					this._navigate(FriendsList, {'userInfo': this.props.userInfo});
 				}}>
 				<View style={{padding:5, backgroundColor:'white', flexDirection:'row', justifyContent: 'space-between'}}>
 					<Text style={{fontSize: 20}}>Danh sách bạn bè</Text>
-					<Text style={{padding: 5, fontSize: 20}}>></Text>
+					<Image
+						style={{height:20, width:20, alignItems: 'flex-end'}}
+						source={{uri: 'https://image.flaticon.com/icons/png/128/60/60758.png'}}
+						resizeMethod="resize"
+						/>
 				</View>
 				</TouchableOpacity>
+
+				
+
 				<Button
 					buttonStyle={{margin: 15}}
 					onPress={this.SignOut}
