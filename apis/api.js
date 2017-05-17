@@ -3,6 +3,7 @@ import {
 	AsyncStorage
 } from 'react-native';
 const API_path = 'http://192.168.83.2:3000/';
+const googleAPI_key = "AIzaSyB2jkGH3HlHuXQ4OQx7wtp96mjjXIHC0rU";
 var token = '';
 var user_id = '';
 var apis = {
@@ -60,7 +61,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -78,7 +79,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 			}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -96,7 +97,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -114,7 +115,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				},
 				body: JSON.stringify({
 						description: comment,
@@ -136,7 +137,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -154,7 +155,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -172,7 +173,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -190,7 +191,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -208,7 +209,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				},
 				body: JSON.stringify({
 						group_name: RoomName,
@@ -230,7 +231,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 			}});
 			let responseJson = await response.json();
 			return responseJson;
@@ -248,7 +249,7 @@ var apis = {
 					'Accept': 'application/json',
 					'Content-Type': 'application/json',
 					'token': token,
-					'user_id': user_id,
+					//'user_id': user_id,
 				},
 				body: JSON.stringify({
 						group_id: GroupID,
@@ -259,6 +260,61 @@ var apis = {
 			return responseJson;
 		}
 		catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async findDirection_googleAPI(origin, destination){
+		try{
+			const directionAPI_path = "https://maps.googleapis.com/maps/api/directions/json?";
+			console.log(directionAPI_path + 
+										"origin=" + origin.latitude + ',' + origin.longitude + 
+										"&destination=" + destination.latitude + ',' + destination.longitude + 
+										"&key=" + googleAPI_key);
+			let response = await fetch(directionAPI_path + 
+										"origin=" + origin.latitude + ',' + origin.longitude + 
+										"&destination=" + destination.latitude + ',' + destination.longitude + 
+										"&key=" + googleAPI_key);
+			let responseJson = await response.json();
+			return responseJson;
+		} catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async distance_googleAPI(origin, destination){
+		try{
+			const distanceAPI_path = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+			console.log(distanceAPI_path + 
+										"origins=" + origin.latitude + ',' + origin.longitude + 
+										"&destinations=" + destination.latitude + ',' + destination.longitude + 
+										"&key=" + googleAPI_key);
+			let response = await fetch(distanceAPI_path + 
+										"origins=" + origin.latitude + ',' + origin.longitude + 
+										"&destinations=" + destination.latitude + ',' + destination.longitude + 
+										"&key=" + googleAPI_key);
+			let responseJson = await response.json();
+			return responseJson.rows[0].elements[0].distance;
+		} catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async getInfoLocation_googleAPI(location){
+		try{
+			const geocodingAPI_path = 'https://maps.googleapis.com/maps/api/geocode/json?';
+			var address;
+			if(typeof location === "object" && typeof location !== null){
+				address = '' + location.latitude + ',' + location.longitude;
+			}else if(typeof location === 'string'){
+				address = encodeURIComponent(location);
+			}
+			let response = await fetch(geocodingAPI_path +
+										'address='+ address +
+										'&key='+ googleAPI_key);
+			let responseJson = response.json();
+			return responseJson;
+		}catch(error){
 			console.error(error);
 			return null;
 		}

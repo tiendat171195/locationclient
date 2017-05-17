@@ -13,6 +13,7 @@ import { GiftedChat } from 'react-native-gifted-chat';
 import io from 'socket.io-client/dist/socket.io.js';
 import DialogAndroid from 'react-native-dialogs';
 import apis from '../apis/api.js';
+import RoomSetting from './RoomSetting.js';
 var myThis;
 let id = 99999999;
 export default class ChatRoom extends Component{
@@ -23,47 +24,54 @@ export default class ChatRoom extends Component{
 	    this.onSend = this.onSend.bind(this);
 			this.onActionSelected = this.onActionSelected.bind(this);
 		}	
+		_navigate(nextScreen, props, type='normal'){
+			this.props.navigator.push({
+				component: nextScreen,
+				passProps: props,
+				type: type
+			})
+		}
 		startSocket(){
 			this.socket = io('http://192.168.83.2:3000/chats/groups', {jsonp:false});
 			this.socket.on('add_message_callback', function(data){
-				console.log('add_message_callback');
-				console.log(data);
-				if(data.chatter != myThis.props.userInfo.user_id){
-					    myThis.setState((previousState) => {
-								return {
-									messages: GiftedChat.append(previousState.messages, [{
-										_id: `ID${id++}`,
-	          text: data.content,
-	          createdAt: new Date(parseInt(data.date)),
-	          user: {
-	            _id: data.chatter,
-	            name: data.chatter,
-	            avatar: 'https://facebook.github.io/react/img/logo_og.png',
-	          }
-									}]),
+				if(data.chatter != myThis.props.userInfo.user_id && data.group_id == myThis.props.groupInfo.group_id){
+					myThis.setState((previousState) => {
+						return {
+							messages: GiftedChat.append(previousState.messages, [{
+								_id: `ID${id++}`,
+	          					text: data.content,
+	          					createdAt: new Date(data.date),
+								user: {
+									_id: data.chatter,
+									name: data.chatter,
+									avatar: 'https://facebook.github.io/react/img/logo_og.png',
+								}}]),
 								};
 							});
-					//myThis.forceUpdate();
 				}
 			});
-			this.socket.emit('get_messages',  JSON.stringify(
-																					{'token': this.props.userInfo.token, 
-																					'user_id': this.props.userInfo.user_id, 
-																					'group_id': this.props.groupInfo.group_id}));
+			this.socket.emit('get_messages',  JSON.stringify({'token': this.props.userInfo.token, 
+															'user_id': this.props.userInfo.user_id, 
+															'group_id': this.props.groupInfo.group_id}));
 			this.socket.on('get_messages_callback', function(data){
-				for (var index = data.chats.length-1; index >= 0 ; index--) {
-					myThis.state.messages.push({
-						_id: data.chats[index]._id,
-	          text: data.chats[index].content,
-	          createdAt: new Date(parseInt(data.chats[index].date)),
-	          user: {
-	            _id: data.chats[index].chatter,
-	            name: data.chats[index].chatter,
-	            avatar: 'https://facebook.github.io/react/img/logo_og.png',
-	          }
-					});	
+				console.log(data);
+				if(myThis.props.groupInfo.group_id != data.group_id) return;
+				for (var index = 0; index < data.chats.length ; index++) {
+					myThis.setState((previousState) => {
+						return {
+							messages: GiftedChat.append(previousState.messages, [{
+								_id: data.chats[index]._id,
+								text: data.chats[index].content,
+								createdAt: new Date(data.chats[index].date),
+								user: {
+									_id: data.chats[index].chatter._id,
+									name: data.chats[index].chatter.username,
+									avatar: 'https://facebook.github.io/react/img/logo_og.png',
+								}
+							}]),
+							};
+					});
 				}
-				myThis.forceUpdate();
 			});
 		}
 		componentWillMount() {
@@ -71,11 +79,11 @@ export default class ChatRoom extends Component{
 	  }
   onSend(messages = []) {
 		this.socket.emit("add_message", JSON.stringify({'token': this.props.userInfo.token, 
-																										'user_id': this.props.userInfo.user_id, 
-																										"group_id": this.props.groupInfo.group_id, 
-																										"chatter_id":this.props.userInfo.user_id, 
-																										"content":messages[0].text, 
-																										"date":''+messages[0].createdAt.getTime() }));
+														'user_id': this.props.userInfo.user_id, 
+														"group_id": this.props.groupInfo.group_id, 
+														"chatter_id":this.props.userInfo.user_id, 
+														"content":messages[0].text, 
+														"date":messages[0].createdAt.getTime() }));
    this.setState((previousState) => {
       return {
         messages: GiftedChat.append(previousState.messages, messages),
@@ -116,6 +124,9 @@ export default class ChatRoom extends Component{
 					this.props.giobalThis.setState({
 						_group_id: this.props.groupInfo.group_id
 					})
+					break;
+				case 2:
+					this._navigate(RoomSetting, {"userInfo":this.props.userInfo, "groupInfo":this.props.groupInfo});
 					break;
 				default:
 					break;
