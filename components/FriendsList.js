@@ -49,14 +49,16 @@ export default class FriendsList extends Component {
   	async getFriendsList(){
   		let responseAPI = await apis.getFriendsList();
 			for (var i = responseAPI.friends.length - 1; i >= 0; i--) {
-				this.state.friends_list.push({'name': responseAPI.friends[i], 'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
+				this.state.friends_list.push({'name': responseAPI.friends[i].username, 
+																			'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
 			};
 			this.forceUpdate();
   	}
   	async getFriendRequestList(){
   		let responseAPI = await apis.getFriendsRequestList();
 			for (var i = responseAPI.friend_requests.length - 1; i >= 0; i--) {
-				this.state.friends_request_list.push({'name': responseAPI.friend_requests[i], 'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
+				this.state.friends_request_list.push({'name': responseAPI.friend_requests[i].username, 
+																							'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
 			};
 			this.forceUpdate();
   	}
