@@ -4,13 +4,14 @@ import {
 	
 } from 'react-native';
 
-import ScrollableTabView from 'react-native-scrollable-tab-view';
+import ScrollableTabView, { DefaultTabBar, } from 'react-native-scrollable-tab-view';
+import Icon from 'react-native-vector-icons/Ionicons';
+import CustomTabBar from './CustomTabBar';
 
 import NewsFeedPage from './NewsFeedPage.js';
 import ChatRoomsPage from './ChatRoomsPage.js';
 import MapPage from './MapPage.js';
-import SettingPage from './SettingPage.js'
-
+import SettingPage from './SettingPage.js';
 export default class MainScreen extends Component{
 	constructor(props){
 		super(props);
@@ -21,12 +22,12 @@ export default class MainScreen extends Component{
 	render(){
 		return (
 			<ScrollableTabView
-          locked={true}
-          style={{backgroundColor:'orange'}}>
-		        <NewsFeedPage tabLabel="Tin tức" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}} />
-		        <ChatRoomsPage tabLabel="Trò chuyện" navigator={this.props.navigator} giobalThis={this} {...{'userInfo':this.props.userInfo}}/>
-		        <MapPage tabLabel="Bản đồ" navigator={this.props.navigator} groupID={this.state._group_id} {...{'userInfo':this.props.userInfo}}/>
-		        <SettingPage tabLabel="Thiết lập" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}}/>
+				renderTabBar={()=><CustomTabBar />}
+         		style={{backgroundColor:'sandybrown'}}
+				tabBarPosition="bottom">
+		        <ChatRoomsPage tabLabel="ios-chatboxes" navigator={this.props.navigator} giobalThis={this} {...{'userInfo':this.props.userInfo}}/>
+		        <MapPage tabLabel="md-locate" navigator={this.props.navigator} groupID={this.state._group_id} {...{'userInfo':this.props.userInfo}}/>
+		        <SettingPage tabLabel="ios-settings" navigator={this.props.navigator} {...{'userInfo':this.props.userInfo}}/>
 		    </ScrollableTabView>
 		);
 	}
