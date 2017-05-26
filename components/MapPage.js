@@ -548,7 +548,7 @@ export default class MapPage extends Component {
           style={{ height: 50, backgroundColor: 'sandybrown' }}
           title="Bản đồ"
           navIcon={{ uri: "https://cdn4.iconfinder.com/data/icons/wirecons-free-vector-icons/32/menu-alt-512.png", width: 50, height: 50 }}
-          onIconClicked={() => this.refs.drawer.openDrawer()}
+          onIconClicked={() => this.state.openDrawer?this.refs.drawer.closeDrawer():this.refs.drawer.openDrawer()}
           actions={[{ title: 'Tìm kiếm', icon: { uri: "https://cdn3.iconfinder.com/data/icons/wpzoom-developer-icon-set/500/67-512.png" }, show: 'always' }]}
           onActionSelected={this.onActionSelected} />
         {this.state.openSearch ?
@@ -567,6 +567,8 @@ export default class MapPage extends Component {
           ref="drawer"
           drawerWidth={200}
           drawerPosition={DrawerLayoutAndroid.positions.Left}
+          onDrawerClose={()=>this.state.openDrawer = false}
+          onDrawerOpen={()=>this.state.openDrawer = true}
           renderNavigationView={() =>
             <Card containerStyle={{ margin: 0, padding: 0 }} >
               {
@@ -574,12 +576,13 @@ export default class MapPage extends Component {
                   return (
                     <ListItem
                       titleStyle={{ fontSize: 20, fontFamily: 'fantasy' }}
-
+                      
                       key={i}
                       title={u.name}
                       onPress={() => {
                         this.state.groupID = u._id;
                         this.startNewSocket();
+                        this.refs.drawer.closeDrawer();
                       }} />
                   )
                 })
