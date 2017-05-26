@@ -8,7 +8,7 @@ import {
 	Alert,
 	ToolbarAndroid
 } from 'react-native';
-
+import {Actions} from "react-native-router-flux";
 import DialogAndroid from 'react-native-dialogs';
 import { Card, ListItem, Button, Icon } from 'react-native-elements';
 
@@ -100,11 +100,11 @@ export default class FriendsList extends Component {
 		return(
 			<ScrollView>
 				<ToolbarAndroid
-				style={{height:50, backgroundColor:'orange'}}
+				style={{height:50, backgroundColor:'sandybrown'}}
       navIcon={{uri:"http://semijb.com/iosemus/BACK.png", width:50, height:50}}
       title="Danh sách bạn bè"
       actions={[{title: 'Thêm người', icon: {uri:"https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-add-128.png"}, show: 'always'}]}
-      onIconClicked={()=>{this.props.navigator.pop();
+      onIconClicked={()=>{Actions.pop();
 													return true }}
 			onActionSelected={this.onActionSelected} />
 				<Text>Bạn bè</Text>

@@ -9,7 +9,7 @@ import {
     TextInput,
     Button
 } from 'react-native';
-
+import {Actions} from "react-native-router-flux";
 import apis from '../apis/api.js';
 
 export default class CreateRoom extends Component{
@@ -24,7 +24,7 @@ export default class CreateRoom extends Component{
 		if(responseAPI == null){
 			return;
 		} 
-        this.props.navigator.pop();
+        Actions.pop();
 		//if(responseAPI.status == "success"){
 			console.log(responseAPI);
 		//}

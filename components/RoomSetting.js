@@ -181,7 +181,7 @@ export default class RoomSetting extends Component{
         return(
             <View style={{flex:1}}>
                 <ToolbarAndroid
-                    style={{height:50, backgroundColor:'orange'}}
+                    style={{height:50, backgroundColor:'sandybrown'}}
                     navIcon={{uri:"http://semijb.com/iosemus/BACK.png", width:50, height:50}}
                     title={'Cài đặt phòng'}
                     onIconClicked={()=>{this.props.navigator.pop();

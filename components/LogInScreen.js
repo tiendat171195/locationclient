@@ -11,6 +11,9 @@ import {
 	Image,
 	AsyncStorage
 } from 'react-native';
+import {Actions} from "react-native-router-flux";
+
+
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 
@@ -20,12 +23,6 @@ import apis from '../apis/api.js';
 export default class Login extends Component{
 	constructor(props){
 		super(props);
-		
-
-		//For test
-		//this._navigate(MainScreen, {'userInfo': { _id: '58dc737f887acf2bc0a156fc',username: 'tiendat',token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1OGRjNzM3Zjg4N2FjZjJiYzBhMTU2ZmMiLCJpYXQiOjE0OTQwNTkwMzgsImV4cCI6MTQ5NDA2OTAzOH0.HOIjU2-c1WG_ImPIQXskx20gRQ2kEUCWoRW3YsqO4TY' }});
-		
-		////////////////////
 		this.state = {
 			username: '',
 			password: ''
@@ -33,25 +30,18 @@ export default class Login extends Component{
 	}
 	componentWillMount(){
 		//Handle Back Android
-		BackAndroid.addEventListener("hardwareBackPress", () => {
-			if (this.props.navigator.getCurrentRoutes().length > 1) {
-				console.log("back pressed");
-				this.props.navigator.pop();
+		/*BackAndroid.addEventListener("hardwareBackPress", () => {
+			if (Actions.length > 1) {
+				Actions.pop();
 				return true // do not exit app
 			} else {
 				return false // exit app
 			}
-	    })
+	    })*/
 
 		this.checkLoggedIn();
 	}
-	_navigate(nextScreen, props, type='normal'){
-		this.props.navigator.push({
-			component: nextScreen,
-			passProps: props,
-			type: type
-		})
-	}
+
 	async SignIn(Username, Password){
 		let responseAPI = await apis.SignIn(Username, Password);
 		if(responseAPI == null){
@@ -70,7 +60,10 @@ export default class Login extends Component{
 				console.error(error);
 			}
 			apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
-			this._navigate(MainScreen, {'userInfo': {'token': responseAPI.user_token, 'user_id': responseAPI.user_id, 'username': responseAPI.username}});
+			Actions.mainscreen({'userInfo': {
+									'token': responseAPI.user_token, 
+									'user_id': responseAPI.user_id,
+									'username': responseAPI.username}});
 		}
 		else{
 			Alert.alert(

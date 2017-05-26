@@ -7,9 +7,10 @@ import {
 	TouchableOpacity,
 	Navigator,
 	StyleSheet,
-	RefreshControl
+	RefreshControl,
+	ToolbarAndroid
 } from 'react-native';
-
+import {Actions} from "react-native-router-flux";
 import apis from '../apis/api.js';
 
 import ChatRoom from './ChatRoom';
@@ -17,22 +18,17 @@ import CreateRoom from './CreateRoom';
 import ActionButton from 'react-native-action-button';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Card, ListItem, Button} from 'react-native-elements';
-
+import Search from 'react-native-search-box';
 export default class ChatRoomsPage extends Component{
 	constructor(props){
 		super(props);
 		this.state = {
 			isRefreshing: false,
 			_roomList: [],
+			openSearch: false,
 		}
 	}
-	_navigate(nextScreen, props, type='normal'){
-		this.props.navigator.push({
-			component: nextScreen,
-			passProps: props,
-			type: type
-		})
-	}
+
 	async GetRoomList(UserID){
 		let responseAPI = await apis.getRoomList(UserID);
 		if(responseAPI == null){
@@ -49,13 +45,13 @@ export default class ChatRoomsPage extends Component{
 	}
 	
 	componentWillMount(){
-		this.GetRoomList(this.props.userInfo._id);
+		this.GetRoomList(this.props.userInfo.user_id);
 		
 	}
 	_onRefresh() {
     this.setState({isRefreshing: true});
     setTimeout(()=>{
-			this.GetRoomList(this.props.userInfo._id);
+			this.GetRoomList(this.props.userInfo.user_id);
     	this.setState({isRefreshing: false});
 		}, 2000);
     
@@ -66,7 +62,17 @@ export default class ChatRoomsPage extends Component{
 	render(){
 		return(
 			<View style={{flex:1}}>
-			<ScrollView style={{backgroundColor: 'silver', flex: 1}}
+			<Search
+				ref="searchbox"
+				placeholder="Tìm kiếm"
+				cancelTitle="Hủy"
+				backgroundColor="sandybrown"
+				contentWidth={30}
+				/**
+				* There many props that can customizable
+				* Please scroll down to Props section
+				*//>
+			<ScrollView style={{backgroundColor: 'white', flex: 1}}
 				refreshControl={<RefreshControl
             refreshing={this.state.isRefreshing}
             onRefresh={this._onRefresh.bind(this)}
@@ -82,27 +88,31 @@ export default class ChatRoomsPage extends Component{
 				    this.state._roomList.map((u, i) => {
 				      return (
 				        <ListItem
+								containerStyle={{height:70}}
+								subtitle='Tin nhắn gần nhất'
+								titleStyle={{fontSize: 20, fontFamily: 'fantasy'}}
+								avatarStyle={{height:60, width: 60, padding:10}}
+								
 				          key={i}
 				          roundAvatar
 				          title={u.name}
 				          avatar={{uri:"https://d30y9cdsu7xlg0.cloudfront.net/png/546908-200.png"}}
-				          onPress={()=>{this._navigate(ChatRoom, {"giobalThis": this.props.giobalThis, "groupInfo":{"group_id":u._id, "name": u.name}, 'userInfo': this.props.userInfo})}} />
+				          onPress={()=>{Actions.chatroom({"giobalThis": this.props.giobalThis,
+																									"groupInfo":{
+																										"group_id":u._id, 
+																										"name": u.name},
+																									'userInfo': this.props.userInfo})}} />
 				      )
 				    })
 				  }
 				</Card>
 			</ScrollView>
 			<ActionButton buttonColor="rgba(231,76,60,1)">
-                <ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={()=>{this._navigate(CreateRoom, {'userInfo': this.props.userInfo})}}>
+                <ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={()=>{Actions.createroom({'userInfo': this.props.userInfo})}}>
                   <Icon name="md-create"/>
                 </ActionButton.Item>
-                <ActionButton.Item buttonColor='#3498db' title="Tìm địa điểm" onPress={() => {}}>
-                  <Icon name="md-notifications-off"/>
-                </ActionButton.Item>
-                <ActionButton.Item buttonColor='#1abc9c' title="Tìm bạn" onPress={() => {}}>
-                  <Icon name="md-done-all"/>
-                </ActionButton.Item>
-              </ActionButton>
+                
+			</ActionButton>
 			</View>
 		);
 	}
