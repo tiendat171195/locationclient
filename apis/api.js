@@ -201,6 +201,24 @@ var apis = {
 			return null;
 		}
 	},
+	async deleteFriendRequest(friendId){
+		try{
+			let response = await fetch(API_path + 'friends/' + friendId + '/delete', 
+			{'method': 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'token': token,
+					//'user_id': user_id,
+				}});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch(error){
+			console.error(error);
+			return null;
+		}
+	},
 	async createNewRoom(RoomName){
 		try{
 			let response = await fetch(API_path + 'groups/', 
@@ -285,16 +303,19 @@ var apis = {
 	async distance_googleAPI(origin, destination){
 		try{
 			const distanceAPI_path = "https://maps.googleapis.com/maps/api/distancematrix/json?";
-			console.log(distanceAPI_path + 
-										"origins=" + origin.latitude + ',' + origin.longitude + 
-										"&destinations=" + destination.latitude + ',' + destination.longitude + 
-										"&key=" + googleAPI_key);
+			console.log(distanceAPI_path +
+				"origins=" + origin.latitude + ',' + origin.longitude +
+				"&destinations=" + destination.latitude + ',' + destination.longitude +
+				"&key=" + googleAPI_key);
 			let response = await fetch(distanceAPI_path + 
 										"origins=" + origin.latitude + ',' + origin.longitude + 
 										"&destinations=" + destination.latitude + ',' + destination.longitude + 
 										"&key=" + googleAPI_key);
 			let responseJson = await response.json();
-			return responseJson.rows[0].elements[0].distance;
+			if (responseJson.rows[0].elements[0].hasOwnProperty("status") && responseJson.rows[0].elements[0].status === "ZERO_RESULTS"){
+				return -1;
+			}
+			return responseJson.rows[0].elements[0].distance.value;
 		} catch(error){
 			console.error(error);
 			return null;
