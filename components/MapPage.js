@@ -215,7 +215,6 @@ export default class MapPage extends Component {
   }
   bindThis() {
     this.onMapPress = this.onMapPress.bind(this);
-    this.startSocket = this.startSocket.bind(this);
     this.getSocketData = this.getSocketData.bind(this);
     this.addSocketCallback = this.addSocketCallback.bind(this);
     this.startGeolocation = this.startGeolocation.bind(this);
@@ -226,16 +225,9 @@ export default class MapPage extends Component {
     this.startNewSocket = this.startNewSocket.bind(this);
   }
   componentWillMount() {
-    console.log("Will mount");
-    this.startNewSocket();
+    this.startNewSocket(this.state.groupID);
     this.GetRoomList(this.props.userInfo.user_id);
     this.startGeolocation();
-  }
-  startNewSocket(){
-    console.log(this.state.groupID);
-    if(this.state.groupID === null) return;
-    this.startSocket(this.state.groupID);
-    this.getSocketData(this.state.groupID);
   }
   getSocketData(groupID) {
     if(groupID === null) return;
@@ -354,14 +346,14 @@ export default class MapPage extends Component {
       );
     });
   }
-  startSocket(groupID) {
+  startNewSocket(groupID) {
     if(groupID === null) return;
     if(this.socket !== undefined) this.socket.disconnect();
     this.socket = io('http://192.168.83.2:3000/maps?group_id=' + groupID, { jsonp: false });
     this.socket.emit('authenticate', { "token": this.props.userInfo.token });
     this.socket.on('authenticated', function () {
       giobalThis.addSocketCallback();
-      giobalThis.getSocketData();
+      giobalThis.getSocketData(groupID);
     });
     this.socket.on('unauthorized', function (msg) {
       console.log("unauthorized: " + JSON.stringify(msg.data));
@@ -408,7 +400,7 @@ export default class MapPage extends Component {
     for (var index = 0; index < this.state.members.length; index++) {
       let distance = await apis.distance_googleAPI(this.state.members[index].coordinate, this.state.start_location)
       console.log(this.state.members[index].coordinate);
-      if (distance!==null && distance.value < 200) {
+      if (distance!==null && distance < 200) {
         for (var i = 0; i < this.state.arriving_users.length; i++) {
           if (this.state.arriving_users[i] == this.state.members[index]._id) return;
         }
@@ -581,7 +573,7 @@ export default class MapPage extends Component {
                       title={u.name}
                       onPress={() => {
                         this.state.groupID = u._id;
-                        this.startNewSocket();
+                        this.startNewSocket(this.state.groupID);
                         this.refs.drawer.closeDrawer();
                       }} />
                   )
@@ -592,7 +584,6 @@ export default class MapPage extends Component {
           }>
           <MapView
             ref="map"
-            provider={this.props.provider}
             style={{ flex: 1 }}
             toolbarEnabled={false}
             onRegionChange={this.onRegionChange}
@@ -651,9 +642,6 @@ export default class MapPage extends Component {
     );
   }
 }
-MapPage.propTypes = {
-  provider: MapView.ProviderPropType,
-};
 
 const styles = StyleSheet.create({
   container: {
