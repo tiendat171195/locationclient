@@ -8,7 +8,8 @@ import {
   Alert,
   ToolbarAndroid,
   DrawerLayoutAndroid,
-  nativeImageSource
+  nativeImageSource,
+  Image
 } from 'react-native';
 import MapView from 'react-native-maps';
 import ActionButton from 'react-native-action-button';
@@ -16,14 +17,14 @@ import Icon from 'react-native-vector-icons/Ionicons';
 // socket
 import io from 'socket.io-client/dist/socket.io.js';
 import apis from '../apis/api.js';
-import { Card, ListItem} from 'react-native-elements';
+import { Card, ListItem } from 'react-native-elements';
 import Search from 'react-native-search-box';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
-let id = 0;
+let id = 100;
 
 const customStyle = [
   {
@@ -198,17 +199,23 @@ export default class MapPage extends Component {
       currentRegion: null,
       members: [],
       watchID: null,
-      start_date: 0,
+      openSearch: false,
+      openDrawer: false,
+      _roomList: [],
+      groupID: null,
       start_location: null,
+      start_address: null,
+      start_date: null,
+      end_location: null,
+      end_address: null,
+      end_date: null,
+      stopovers: [],
       direction_coordinates: [],
       arriving_users: [],
-      openSearch: false,
-			openDrawer: false,
-      _roomList: [],
-      groupID: null
+      destination_users: [],
     };
 
-    
+
     this.bindThis = this.bindThis.bind(this);
     this.bindThis();
 
@@ -219,10 +226,10 @@ export default class MapPage extends Component {
     this.addSocketCallback = this.addSocketCallback.bind(this);
     this.startGeolocation = this.startGeolocation.bind(this);
     this.findDirection = this.findDirection.bind(this);
-    this.calculateDistanceAllMembers = this.calculateDistanceAllMembers.bind(this);
     this.onActionSelected = this.onActionSelected.bind(this);
     this.GetRoomList = this.GetRoomList.bind(this);
     this.startNewSocket = this.startNewSocket.bind(this);
+    this.calculateDistanceThisUser = this.calculateDistanceThisUser.bind(this);
   }
   componentWillMount() {
     this.startNewSocket(this.state.groupID);
@@ -230,21 +237,32 @@ export default class MapPage extends Component {
     this.startGeolocation();
   }
   getSocketData(groupID) {
-    if(groupID === null) return;
-    this.socket.emit('get_markers',
+    if (groupID === null) return;
+
+    /*this.socket.emit('get_markers',
       JSON.stringify({
         'user_id': this.props.userInfo.user_id,
         'group_id': groupID
-      }));
-    this.socket.emit('get_latlngs',
-      JSON.stringify({
-        'user_id': this.props.userInfo.user_id,
-        'group_id': groupID
-      }));
-    this.socket.emit('get_starting_point',
-      JSON.stringify({
-        "group_id": groupID
-      }));
+      }));*/
+
+    this.socket.emit('get_latlngs', JSON.stringify({
+      'user_id': this.props.userInfo.user_id,
+      'group_id': groupID
+    }));
+
+    this.socket.emit('get_stopovers', JSON.stringify({
+      "group_id": groupID
+    }));
+    this.socket.emit('get_starting_point', JSON.stringify({
+      "group_id": groupID
+    }));
+    this.socket.emit('get_ending_point', JSON.stringify({
+      "group_id": groupID
+    }));
+    this.socket.emit("get_arriving_users", JSON.stringify({
+      "group_id": groupID
+    }));
+
   }
   addSocketCallback() {
     //Add a new marker
@@ -290,11 +308,10 @@ export default class MapPage extends Component {
       if (data.hasOwnProperty('success')) return;
       if (data.group_id != giobalThis.state.groupID) return;
 
-      giobalThis.setState({ members: [] });
+      giobalThis.state.members = [];
       for (var index = 0; index < data.latlngs.length; index++) {
-        giobalThis.state.members.push({ '_id': data.latlngs[index]._id, 'coordinate': { 'latitude': data.latlngs[index].latlng.lat, 'longitude': data.latlngs[index].latlng.lng }, 'key': id++ });
+        giobalThis.state.members.push({ '_id': data.latlngs[index]._id, 'coordinate': { 'latitude': data.latlngs[index].latlng.lat, 'longitude': data.latlngs[index].latlng.lng }, 'key': data.latlngs[index]._id });
       }
-      giobalThis.calculateDistanceAllMembers();
       giobalThis.forceUpdate();
     });
 
@@ -302,53 +319,255 @@ export default class MapPage extends Component {
     this.socket.on('update_latlng_callback', function (data) {
       if (data.group_id != giobalThis.state.groupID) return;
       giobalThis.replaceLocationById(data.user_id, { 'latitude': data.latlng.lat, 'longitude': data.latlng.lng });
-      giobalThis.calculateDistanceAllMembers();
       giobalThis.forceUpdate();
     });
 
-    //Update infomation of starting point
-    this.socket.on('update_starting_point_callback', function (data) {
+    this.socket.on('update_starting_point_callback', async function (data) {
+      if (giobalThis.state.groupID != data.group_id) return;
+
+      giobalThis.setState({
+        start_date: data.hasOwnProperty("start_time") ? data.start_time : null
+      })
+      if (data.hasOwnProperty("start_latlng")) {
+        var pointer = await giobalThis.getPointerInfo({
+          latitude: data.start_latlng.lat,
+          longitude: data.start_latlng.lng
+        });
+        giobalThis.setState({
+          start_location: {
+            "latitude": pointer.coordinate.latitude,
+            "longitude": pointer.coordinate.longitude
+          },
+          start_address: pointer.address
+        });
+      }
+      else {
+        giobalThis.setState({
+          start_location: null,
+          start_address: null
+        })
+      }
+    });
+    this.socket.on('get_starting_point_callback', async function (data) {
       if (giobalThis.state.groupID != data.group_id) return;
       giobalThis.setState({
-        start_date: data.start_time,
-        start_location: data.hasOwnProperty("start_latlng") ? { "latitude": data.start_latlng.lat, "longitude": data.start_latlng.lng }
-          : null
-      });
-
-
+        start_date: data.hasOwnProperty("start_time") ? data.start_time : null
+      })
+      if (data.hasOwnProperty("start_latlng")) {
+        var pointer = await giobalThis.getPointerInfo({
+          latitude: data.start_latlng.lat,
+          longitude: data.start_latlng.lng
+        });
+        giobalThis.setState({
+          start_location: {
+            "latitude": pointer.coordinate.latitude,
+            "longitude": pointer.coordinate.longitude
+          },
+          start_address: pointer.address
+        });
+      }
+      else {
+        giobalThis.setState({
+          start_location: null,
+          start_address: null
+        })
+      }
     });
 
-    //Get infomation of starting point
-    this.socket.on('get_starting_point_callback', function (data) {
+    this.socket.on('update_ending_point_callback', async function (data) {
       if (giobalThis.state.groupID != data.group_id) return;
       giobalThis.setState({
-        start_date: data.hasOwnProperty("start_time") ? data.start_time : 0,
-        start_location: data.hasOwnProperty("start_latlng") ? { "latitude": data.start_latlng.lat, "longitude": data.start_latlng.lng }
-          : null
+        end_date: data.hasOwnProperty("end_time") ? data.end_time : null
+      })
+      if (data.hasOwnProperty("end_latlng")) {
+        var pointer = await giobalThis.getPointerInfo({
+          latitude: data.end_latlng.lat,
+          longitude: data.end_latlng.lng
+        });
+        giobalThis.setState({
+          end_location: {
+            "latitude": pointer.coordinate.latitude,
+            "longitude": pointer.coordinate.longitude
+          },
+          end_address: pointer.address
+        });
+      }
+      else {
+        giobalThis.setState({
+          end_location: null,
+          end_address: null
+        })
+      }
+    });
+
+    this.socket.on('get_ending_point_callback', async function (data) {
+      if (giobalThis.state.groupID != data.group_id) return;
+      giobalThis.setState({
+        end_date: data.hasOwnProperty("end_time") ? data.end_time : null
+      })
+      if (data.hasOwnProperty("end_latlng")) {
+        var pointer = await giobalThis.getPointerInfo({
+          latitude: data.end_latlng.lat,
+          longitude: data.end_latlng.lng
+        });
+        giobalThis.setState({
+          end_location: {
+            "latitude": pointer.coordinate.latitude,
+            "longitude": pointer.coordinate.longitude
+          },
+          end_address: pointer.address
+        });
+      }
+      else {
+        giobalThis.setState({
+          end_location: null,
+          end_address: null
+        })
+      }
+      //will delete when api has fixed
+      if (data.hasOwnProperty("start_latlng")) {
+        var pointer = await giobalThis.getPointerInfo({
+          latitude: data.start_latlng.lat,
+          longitude: data.start_latlng.lng
+        });
+        giobalThis.setState({
+          end_location: {
+            "latitude": pointer.coordinate.latitude,
+            "longitude": pointer.coordinate.longitude
+          },
+          end_address: pointer.address
+        });
+      }
+      else {
+        giobalThis.setState({
+          end_location: null,
+          end_address: null
+        })
+      }
+    });
+
+    this.socket.on('get_stopovers_callback', function (data) {
+      if (giobalThis.state.groupID != data.group_id) return;
+      data.stopovers.map(u => {
+        giobalThis.state.stopovers.push({
+          "_id": u._id,
+          "coordinate":
+          {
+            "latitude": u.latlng.lat,
+            "longitude": u.latlng.lng
+          },
+          'users': []
+        });
+      });
+      giobalThis.forceUpdate();
+    });
+
+    this.socket.on('add_stopover_callback', function (data) {
+
+      if (giobalThis.state.groupID != data.group_id) return;
+      giobalThis.state.stopovers.push({
+        "_id": data.stopover_id,
+        "coordinate":
+        {
+          "latitude": data.latlng.lat,
+          "longitude": data.latlng.lng
+        }
+      });
+      giobalThis.forceUpdate();
+    });
+
+    this.socket.on("get_arriving_users_callback", function (data) {
+      if (giobalThis.state.groupID != data.group_id) return;
+      data.arriving_users.map(u => {
+        console.log(data.username);
+        giobalThis.state.arriving_users.push({
+          "user_id": data._id,
+          "username": data.username
+        });
       });
     });
 
-    //Handle 1 user comes in appointment point
+    //Handle 1 user comes in arriving point
     this.socket.on("add_arriving_user_callback", function (data) {
-      if (data.group_id != giobalThis.props.groupID) return;
+      if (data.group_id != giobalThis.state.groupID) return;
+      giobalThis.state.arriving_users.push({
+        "user_id": data.user_id,
+        "username": data.username
+      })
       Alert.alert(
         "Thông báo điểm hẹn",
-        "Người dùng đang đến: " + data.user_id
+        "Người dùng đang đến: " + data.username
       );
     });
 
-    //Handle 1 user leaves appointment point
+    //Handle 1 user leaves starting point
     this.socket.on("delete_arriving_user_callback", function (data) {
       if (data.group_id != giobalThis.state.groupID) return;
+      giobalThis.state.arriving_users.splice(this.state.arriving_users.indexOf({
+        "user_id": data.user_id,
+        "username": data.username
+      }), 1);
       Alert.alert(
         "Thông báo điểm hẹn",
-        "Người dùng rời khỏi: " + data.user_id
+        "Người dùng rời khỏi: " + data.username
       );
+    });
+
+    //Handle 1 user comes in destination point
+    this.socket.on("add_destination_user_callback", function (data) {
+      if (data.group_id != giobalThis.state.groupID) return;
+      giobalThis.state.destination_users.push({
+        "user_id": data.user_id,
+        "username": data.username
+      })
+      Alert.alert(
+        "Thông báo điểm hẹn",
+        "Người dùng đang đến: " + data.username
+      );
+    });
+
+    //Handle 1 user leaves destination point
+    this.socket.on("delete_destination_user_callback", function (data) {
+      if (data.group_id != giobalThis.state.groupID) return;
+      giobalThis.state.destination_users.splice(this.state.destination_users.indexOf({
+        "user_id": data.user_id,
+        "username": data.username
+      }), 1);
+      Alert.alert(
+        "Thông báo điểm hẹn",
+        "Người dùng rời khỏi: " + data.username
+      );
+    });
+
+    //Handle 1 user comes in stopover point
+    this.socket.on("add_user_into_stopover_callback", function (data) {
+      if (data.group_id != giobalThis.state.groupID) return;
+      giobalThis.state.stopovers.map(u=>{
+        if (u._id === data.stopover_id){
+          u.users.push({
+            "user_id": data.user_id,
+            "username": data.username
+          });
+        }
+      });
+    });
+
+    //Handle 1 user leaves stopover point
+    this.socket.on("delete_user_into_stopover_callback", function (data) {
+      if (data.group_id != giobalThis.state.groupID) return;
+      giobalThis.state.stopovers.map(u => {
+        if (u._id === data.stopover_id) {
+          u.users.splice({
+            "user_id": data.user_id,
+            "username": data.username
+          }, 1);
+        }
+      });
     });
   }
   startNewSocket(groupID) {
-    if(groupID === null) return;
-    if(this.socket !== undefined) this.socket.disconnect();
+    if (groupID === null) return;
+    if (this.socket !== undefined) this.socket.disconnect();
     this.socket = io('http://192.168.83.2:3000/maps?group_id=' + groupID, { jsonp: false });
     this.socket.emit('authenticate', { "token": this.props.userInfo.token });
     this.socket.on('authenticated', function () {
@@ -360,27 +579,21 @@ export default class MapPage extends Component {
     });
 
   }
-  addMarker(groupID, coordinate){
-    if(groupID === null) return;
-    this.socket.emit('add_marker', 
-                    JSON.stringify({ 'user_id': this.props.userInfo.user_id, 
-                                      'group_id': groupID, 
-                                      'latlng': { 'lat': coordinate.latitude, 
-                                                  'lng': coordinate.longitude } }));
+  addMarker(groupID, coordinate) {
+    if (groupID === null) return;
+    this.socket.emit('add_marker',
+      JSON.stringify({
+        'user_id': this.props.userInfo.user_id,
+        'group_id': groupID,
+        'latlng': {
+          'lat': coordinate.latitude,
+          'lng': coordinate.longitude
+        }
+      }));
 
   }
   onMapPress(e) {
-    /*this.setState({
-      markers: [
-        ...this.state.markers,
-        {
-          coordinate: e.nativeEvent.coordinate,
-          key: `Marker${id++}`,
-        },
-      ],
-    });*/
-    //test socket
-    this.addMarker(this.state.groupID, e.nativeEvent.coordinate);
+    //this.addMarker(this.state.groupID, e.nativeEvent.coordinate);
   }
   replaceLocationById(UserID, LatLng) {
     for (var index = 0; index < this.state.members.length; index++) {
@@ -394,46 +607,93 @@ export default class MapPage extends Component {
   onRegionChange(region) {
     console.log('region change');
   }
-
-  async calculateDistanceAllMembers() {
-    if (this.state.start_location === null) return;
-    for (var index = 0; index < this.state.members.length; index++) {
-      let distance = await apis.distance_googleAPI(this.state.members[index].coordinate, this.state.start_location)
-      console.log(this.state.members[index].coordinate);
-      if (distance!==null && distance < 200) {
-        for (var i = 0; i < this.state.arriving_users.length; i++) {
-          if (this.state.arriving_users[i] == this.state.members[index]._id) return;
-        }
-        this.state.arriving_users.push(this.state.members[index]._id);
-        this.socket.emit("add_arriving_user", JSON.stringify({
-          "group_id": this.state.groupID,
-          "user_id": this.state.members[index]._id
-        }));
-      }
-      else {
-        for (var i = 0; i < this.state.arriving_users.length; i++) {
-          if (this.state.arriving_users[i] == this.state.members[index]._id) {
-            this.state.members.splice(i, 1);
-            this.socket.emit("delete_arriving_user", JSON.stringify({
-              "group_id": this.state.groupID,
-              "user_id": this.state.members[index]._id
-            }));
-          }
-        }
-      }
+  addToArrivingUserSocket() {
+    if (this.state.arriving_users.indexOf({ "_id": this.props.userInfo.user_id, "username": this.props.userInfo.username }) === -1) {
+      this.socket.emit("add_arriving_user", JSON.stringify({ "group_id": this.state.groupID, "user_id": this.props.userInfo.user_id }));
     }
   }
-  updateCurrentLatlng(groupID, position){
-    if(groupID === null) return;
-    this.socket.emit('update_latlng', JSON.stringify({
-          'user_id': this.props.userInfo.user_id,
-          'group_id': this.state.groupID,
-          'latlng':
-          {
-            'lat': position.coords.latitude,
-            'lng': position.coords.longitude
-          }
+  notInArrivingUsersSocket() {
+    if (this.state.arriving_users.indexOf({ "_id": this.props.userInfo.user_id, "username": this.props.userInfo.username }) !== -1) {
+      this.socket.emit("delete_arriving_user", JSON.stringify({ "group_id": this.state.groupID, "user_id": this.props.userInfo.user_id }));
+    }
+  }
+  addToDestinationUserSocket() {
+    if (this.state.arriving_users.indexOf({ "_id": this.props.userInfo.user_id, "username": this.props.userInfo.username }) === -1) {
+      this.socket.emit("add_destination_user", JSON.stringify({ "group_id": this.state.groupID, "user_id": this.props.userInfo.user_id }));
+    }
+  }
+  notInDestinationUsersSocket() {
+    if (this.state.arriving_users.indexOf({ "_id": this.props.userInfo.user_id, "username": this.props.userInfo.username }) !== -1) {
+      this.socket.emit("delete_destination_user", JSON.stringify({ "group_id": this.state.groupID, "user_id": this.props.userInfo.user_id }));
+    }
+  }
+  addToStopoverSocket(stopoverID) {
+    this.state.stopovers.map(u=>{
+      if(u._id === stopoverID){
+        return;
+      }
+    });
+    this.socket.emit("add_user_into_stopover", JSON.stringify({
+      "group_id": this.state.groupID,
+      "stopover_id": stopoverID,
+      "user_id": this.props.userInfo.user_id
+    }));
+  }
+  notInStopoverSocket(stopoverID) {
+    this.state.stopovers.map(u => {
+      if (u._id === stopoverID) {
+        this.socket.emit("delete_user_into_stopover", JSON.stringify({
+          "group_id": this.state.groupID,
+          "stopover_id": stopoverID,
+          "user_id": this.props.userInfo.user_id
         }));
+        return;
+      }
+    });
+    
+  }
+  async calculateDistanceThisUser() {
+    if (this.state.start_location !== null) {
+      let distance = await apis.distance_googleAPI(this.state.currentRegion, this.state.start_location);
+      if (distance > 0 && distance < 100) {
+        this.addToArrivingUsersSocket();
+        return;
+      }
+      else {
+        this.notInArrivingUsersSocket();
+      }
+    }
+    if (this.state.end_location !== null) {
+      let distance = await apis.distance_googleAPI(this.state.currentRegion, this.state.end_location);
+      if (distance > 0 && distance < 100) {
+        this.addToDestinationUserSocket();
+        return;
+      }
+      else{
+        this.notInDestinationUsersSocket();
+      }
+    }
+    this.state.stopovers.map(u => async () => {
+      let distance = await apis.distance_googleAPI(this.state.currentRegion, u.coordinate);
+      if (distance > 0 && distance < 100) {
+        return;
+
+      }
+    });
+  }
+
+  updateCurrentLatlng(groupID, position) {
+    if (groupID === null) return;
+    this.calculateDistanceThisUser();
+    this.socket.emit('update_latlng', JSON.stringify({
+      'user_id': this.props.userInfo.user_id,
+      'group_id': this.state.groupID,
+      'latlng':
+      {
+        'lat': position.coords.latitude,
+        'lng': position.coords.longitude
+      }
+    }));
   }
   async startGeolocation() {
     if (this.state.watchID !== null) navigator.geolocation.clearWatch(this.state.watchID);
@@ -448,8 +708,8 @@ export default class MapPage extends Component {
             longitudeDelta: LONGITUDE_DELTA,
           }
         });
-        giobalThis.updateCurrentLatlng(this.state.groupID, position);
-        
+        this.updateCurrentLatlng(this.state.groupID, position);
+
 
       },
       (error) => {
@@ -463,7 +723,7 @@ export default class MapPage extends Component {
                 longitudeDelta: LONGITUDE_DELTA,
               }
             });
-            giobalThis.updateCurrentLatlng(this.state.groupID, position);
+            this.updateCurrentLatlng(this.state.groupID, position);
 
           },
           (error) => {
@@ -509,16 +769,16 @@ export default class MapPage extends Component {
   }
   onActionSelected(position) {
     switch (position) {
-				case 0:
-					this.setState({
-            openSearch: !this.state.openSearch
-          })
-					break;
-				
-				default:
-					break;
-			}
-    
+      case 0:
+        this.setState({
+          openSearch: !this.state.openSearch
+        })
+        break;
+
+      default:
+        break;
+    }
+
   }
   async GetRoomList(UserID) {
     let responseAPI = await apis.getRoomList(UserID);
@@ -533,6 +793,24 @@ export default class MapPage extends Component {
     }
     this.forceUpdate();
   }
+  async getPointerInfo(location) {
+    try {
+      let responseAPI = await apis.getInfoLocation_googleAPI(location);
+      if (responseAPI.status === "OK") {
+        return {
+          "address": responseAPI.results[0].formatted_address,
+          "coordinate": {
+            latitude: responseAPI.results[0].geometry.location.lat,
+            longitude: responseAPI.results[0].geometry.location.lng,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+          }
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
   render() {
     return (
       <View style={{ flex: 1 }}>
@@ -540,7 +818,7 @@ export default class MapPage extends Component {
           style={{ height: 50, backgroundColor: 'sandybrown' }}
           title="Bản đồ"
           navIcon={{ uri: "https://cdn4.iconfinder.com/data/icons/wirecons-free-vector-icons/32/menu-alt-512.png", width: 50, height: 50 }}
-          onIconClicked={() => this.state.openDrawer?this.refs.drawer.closeDrawer():this.refs.drawer.openDrawer()}
+          onIconClicked={() => this.state.openDrawer ? this.refs.drawer.closeDrawer() : this.refs.drawer.openDrawer()}
           actions={[{ title: 'Tìm kiếm', icon: { uri: "https://cdn3.iconfinder.com/data/icons/wpzoom-developer-icon-set/500/67-512.png" }, show: 'always' }]}
           onActionSelected={this.onActionSelected} />
         {this.state.openSearch ?
@@ -559,8 +837,8 @@ export default class MapPage extends Component {
           ref="drawer"
           drawerWidth={200}
           drawerPosition={DrawerLayoutAndroid.positions.Left}
-          onDrawerClose={()=>this.state.openDrawer = false}
-          onDrawerOpen={()=>this.state.openDrawer = true}
+          onDrawerClose={() => this.state.openDrawer = false}
+          onDrawerOpen={() => this.state.openDrawer = true}
           renderNavigationView={() =>
             <Card containerStyle={{ margin: 0, padding: 0 }} >
               {
@@ -568,7 +846,6 @@ export default class MapPage extends Component {
                   return (
                     <ListItem
                       titleStyle={{ fontSize: 20, fontFamily: 'fantasy' }}
-                      
                       key={i}
                       title={u.name}
                       onPress={() => {
@@ -601,29 +878,71 @@ export default class MapPage extends Component {
               if (user._id != this.props.userInfo.user_id) return (
                 <MapView.Marker
                   title={user._id}
-                  key={user.key}
-                  coordinate={user.coordinate}
-                  image={{ uri: "https://furtaev.ru/preview/user_on_map_2_small.png" }}
-                />
+                  key={user._id}
+                  coordinate={user.coordinate}>
+                  <View>
+                    <Image
+                      source={{ uri: "https://furtaev.ru/preview/user_on_map_2_small.png" }}
+                      style={{ height: 50, width: 50 }}
+                    />
+                  </View>
+                </MapView.Marker>
               )
             })}
             {this.state.currentRegion !== null ? (
               <MapView.Marker
                 title='Vị trí của bạn'
-                key={99999}
+                key={0}
                 coordinate={this.state.currentRegion}
-                image={{ uri: "https://furtaev.ru/preview/user_on_map_2_small.png" }}
-              />
+              >
+                <View>
+                  <Image
+                    source={{ uri: "https://furtaev.ru/preview/user_on_map_2_small.png" }}
+                    style={{ height: 50, width: 50 }}
+                  />
+                </View>
+              </MapView.Marker>
             ) : <View />}
 
             {this.state.start_location !== null ?
               <MapView.Marker
-                title='Điểm hẹn'
-                key={9999}
-                coordinate={this.state.start_location}
-                image={{ uri: "http://files.softicons.com/download/web-icons/vista-map-markers-icons-by-icons-land/png/128x128/MapMarker_Flag1_Left_Azure.png" }}
-              />
+                title='Điểm bắt đầu'
+                key={1}
+                coordinate={this.state.start_location}>
+                <View>
+                  <Image
+                    source={{ uri: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-2-Right-Pink-icon.png" }}
+                    style={{ height: 50, width: 50 }}
+                  />
+                </View>
+              </MapView.Marker>
               : <View />}
+            {this.state.end_location !== null ?
+              <MapView.Marker
+                title='Điểm kết thúc'
+                key={2}
+                coordinate={this.state.end_location}>
+                <View>
+                  <Image
+                    source={{ uri: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-4-Right-Pink-icon.png" }}
+                    style={{ height: 50, width: 50 }}
+                  />
+                </View>
+              </MapView.Marker>
+              : <View />}
+            {this.state.stopovers.map(u => {
+              <MapView.Marker
+                title='Điểm dừng chân'
+                key={u._id}
+                coordinate={u.coordinate}>
+                <View>
+                  <Image
+                    source={{ uri: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Ball-Pink-icon.png" }}
+                    style={{ height: 50, width: 50 }}
+                  />
+                </View>
+              </MapView.Marker>
+            })}
             <MapView.Polyline
               coordinates={this.state.direction_coordinates}
               strokeWidth={5}
