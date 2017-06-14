@@ -3,6 +3,7 @@ import {
 	AsyncStorage
 } from 'react-native';
 const API_path = 'http://192.168.83.2:3000/';
+//const API_path = ' https://stormy-woodland-18039.herokuapp.com/';
 const googleAPI_key = "AIzaSyB2jkGH3HlHuXQ4OQx7wtp96mjjXIHC0rU";
 var token = '';
 var user_id = '';
@@ -13,7 +14,7 @@ var apis = {
 	},
 	async SignUp(username, password){
 		try{
-			let response = await fetch(API_path + 'auth/register', 
+			let response = await fetch(API_path + 'auth/register/', 
 			{"method": "POST",
 				headers: {
 					'Accept': 'application/json',
@@ -34,7 +35,7 @@ var apis = {
 	},
 	async SignIn(username, password){
 		try{
-			let response = await fetch(API_path + 'auth/login', 
+			let response = await fetch(API_path + 'auth/login/', 
 			{"method": "POST",
 				headers: {
 					'Accept': 'application/json',
@@ -73,7 +74,7 @@ var apis = {
 	},
 	async SignOut(){
 		try{
-			let response = await fetch(API_path + 'auth/logout',
+			let response = await fetch(API_path + 'auth/logout/',
 			{method: "GET",
 				headers: {
 					'Accept': 'application/json',
@@ -167,7 +168,7 @@ var apis = {
 	},
 	async addNewFriend(friendId){
 		try{
-			let response = await fetch(API_path + 'friends/' + friendId +'/add', 
+			let response = await fetch(API_path + 'friends/' + friendId +'/add/', 
 			{'method': 'POST',
 				headers: {
 					'Accept': 'application/json',
@@ -185,7 +186,7 @@ var apis = {
 	},
 	async acceptFriend(friendId){
 		try{
-			let response = await fetch(API_path + 'friends/' + friendId + '/accept', 
+			let response = await fetch(API_path + 'friends/' + friendId + '/accept/', 
 			{'method': 'POST',
 				headers: {
 					'Accept': 'application/json',
@@ -203,7 +204,7 @@ var apis = {
 	},
 	async deleteFriendRequest(friendId){
 		try{
-			let response = await fetch(API_path + 'friends/' + friendId + '/delete', 
+			let response = await fetch(API_path + 'friends/' + friendId + '/delete/', 
 			{'method': 'POST',
 				headers: {
 					'Accept': 'application/json',
@@ -317,6 +318,27 @@ var apis = {
 			}
 			return responseJson.rows[0].elements[0].distance.value;
 		} catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async distanceMatrix_googleAPI(origin, destination) {
+		try {
+			const distanceAPI_path = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+			console.log(distanceAPI_path +
+				"origins=" + origin.latitude + ',' + origin.longitude +
+				"&destinations=" + destination.latitude + ',' + destination.longitude +
+				"&key=" + googleAPI_key);
+			let response = await fetch(distanceAPI_path +
+				"origins=" + origin.latitude + ',' + origin.longitude +
+				"&destinations=" + destination.latitude + ',' + destination.longitude +
+				"&key=" + googleAPI_key);
+			let responseJson = await response.json();
+			if (responseJson.rows[0].elements[0].hasOwnProperty("status") && responseJson.rows[0].elements[0].status === "ZERO_RESULTS") {
+				return -1;
+			}
+			return responseJson.rows[0].elements[0].distance.value;
+		} catch (error) {
 			console.error(error);
 			return null;
 		}
