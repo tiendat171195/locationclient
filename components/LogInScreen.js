@@ -9,7 +9,8 @@ import {
 	BackAndroid,
 	Dimensions,
 	Image,
-	AsyncStorage
+	AsyncStorage,
+	ScrollView
 } from 'react-native';
 import {Actions} from "react-native-router-flux";
 
@@ -113,7 +114,7 @@ export default class Login extends Component{
 	}
 	render(){
 		return(
-			<View style={{backgroundColor:'#fffacd', flex:1}}>
+			<ScrollView style={{backgroundColor:'#fffacd', flex:1}}>
 				<Image
 					style={{height: height/2.5}}
 					resizeMode='center'
@@ -152,7 +153,7 @@ export default class Login extends Component{
 					onPress={() => this.SignUp()}
 					title="Đăng ký"
 					color="#848384" />
-			</View>
+			</ScrollView>
 		);
 	}
 }
