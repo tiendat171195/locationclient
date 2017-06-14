@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "425145670455",
+    "firebase_url": "https://togo-app-4f4f6.firebaseio.com",
+    "project_id": "togo-app-4f4f6",
+    "storage_bucket": "togo-app-4f4f6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:425145670455:android:c6a8a200448b300f",
+        "android_client_info": {
+          "package_name": "com.locationclient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "425145670455-vrml0acu9051evnqevp6s6r9b1vebh7o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDM-6BM0IoTPxYm2RrxZBWCEvHxtlv4Fy4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
