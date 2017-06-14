@@ -40,11 +40,12 @@ export default class ChatRoom extends Component {
 	}
 	addSocketCallback() {
 		this.socket.on('add_message_callback', function (data) {
-			if (data.chatter != myThis.props.userInfo.user_id && data.group_id == myThis.props.groupInfo.group_id) {
+			console.log('add_message_callback');
+			if (data.chatter._id != myThis.props.userInfo.user_id && data.group._id == myThis.props.groupInfo.group_id) {
 				myThis.setState((previousState) => {
 					return {
 						messages: GiftedChat.append(previousState.messages, [{
-							_id: data._id,
+							_id: data.chat_id,
 							text: data.content,
 							createdAt: new Date(data.date),
 							user: {
@@ -59,17 +60,18 @@ export default class ChatRoom extends Component {
 		});
 
 		this.socket.on('get_messages_callback', function (data) {
+			console.log('get_messages_callback');
 			if (myThis.props.groupInfo.group_id != data.group_id) return;
-			for (var index = 0; index < data.chats.length; index++) {
+			for (var index = 0; index < data.messages.length; index++) {
 				myThis.setState((previousState) => {
 					return {
 						messages: GiftedChat.append(previousState.messages, [{
-							_id: data.chats[index]._id,
-							text: data.chats[index].content,
-							createdAt: new Date(data.chats[index].date),
+							_id: data.messages[index]._id,
+							text: data.messages[index].content,
+							createdAt: new Date(data.messages[index].date),
 							user: {
-								_id: data.chats[index].chatter._id,
-								name: data.chats[index].chatter.username,
+								_id: data.messages[index].chatter._id,
+								name: data.messages[index].chatter.username,
 								avatar: 'https://facebook.github.io/react/img/logo_og.png',
 							}
 						}]),
@@ -79,7 +81,7 @@ export default class ChatRoom extends Component {
 		});
 	}
 	startSocket() {
-		this.socket = io('http://192.168.83.2:3000/chats/groups?group_id=' + this.props.groupInfo.group_id, { jsonp: false });
+		this.socket = io('http://192.168.83.2:3000/chats?group_id=' + this.props.groupInfo.group_id, { jsonp: false });
 		this.socket.emit('authenticate', { "token": this.props.userInfo.token });
 		this.socket.on('authenticated', function () {
 			myThis.addSocketCallback();
@@ -97,9 +99,7 @@ export default class ChatRoom extends Component {
 		this.socket.emit("add_message", JSON.stringify({
 			'user_id': this.props.userInfo.user_id,
 			"group_id": this.props.groupInfo.group_id,
-			"chatter_id": this.props.userInfo.user_id,
-			"content": messages[0].text,
-			"date": messages[0].createdAt.getTime()
+			"content": messages[0].text
 		}));
 		this.setState((previousState) => {
 			return {
@@ -137,11 +137,6 @@ export default class ChatRoom extends Component {
 				this.showAddMemberDialog(this.props.groupInfo.group_id);
 				break;
 			case 1:
-				this.props.giobalThis.setState({
-					_group_id: this.props.groupInfo.group_id
-				})
-				break;
-			case 2:
 				Actions.roomsetting({ "userInfo": this.props.userInfo, "groupInfo": this.props.groupInfo });
 				break;
 			default:
@@ -159,11 +154,6 @@ export default class ChatRoom extends Component {
 					actions={[{
 						title: 'Thêm người',
 						icon: { uri: "https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-add-128.png" },
-						show: 'always'
-					},
-					{
-						title: 'Bắt đầu phượt',
-						icon: { uri: "http://www.clipartpanda.com/clipart_images/gps-icon-png-check-in-at-the-38806012/download" },
 						show: 'always'
 					},
 					{
