@@ -70,101 +70,55 @@ export default class RoomSetting extends Component {
         });
     }
     addSocketCallback() {
-        this.socket.on('update_starting_point_callback', async function (data) {
+        this.socket.on('get_starting_point_callback', function (data) {
             if (giobalThis.props.groupInfo.group_id != data.group_id) return;
             if (data.hasOwnProperty("start_time")) {
                 giobalThis.setState({
                     start_date: data.start_time
                 })
             }
-            if (data.hasOwnProperty("start_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.start_latlng.lat,
-                    longitude: data.start_latlng.lng
-                });
-                giobalThis.setState({
-                    start_location: {
-                        "latitude": pointer.coordinate.latitude,
-                        "longitude": pointer.coordinate.longitude
-                    },
-                    start_address: pointer.address
-                });
-            }
-            giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
         });
-        this.socket.on('get_starting_point_callback', async function (data) {
-            if (giobalThis.props.groupInfo.group_id != data.group_id) return;
-            console.log("get_starting_point_callback");
-            console.log(data);
-            if (data.hasOwnProperty("start_time")) {
-                giobalThis.setState({
-                    start_date: data.start_time
-                })
-            }
-            if (data.hasOwnProperty("start_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.start_latlng.lat,
-                    longitude: data.start_latlng.lng
-                });
-                giobalThis.setState({
-                    start_location: {
-                        "latitude": pointer.coordinate.latitude,
-                        "longitude": pointer.coordinate.longitude
-                    },
-                    start_address: pointer.address
-                });
-            }
-            giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
-        });
-        this.socket.on('update_ending_point_callback', async function (data) {
+
+        this.socket.on('get_ending_point_callback', function (data) {
             if (giobalThis.props.groupInfo.group_id != data.group_id) return;
             if (data.hasOwnProperty("end_time")) {
                 giobalThis.setState({
                     end_date: data.end_time
                 })
             }
-            if (data.hasOwnProperty("end_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.end_latlng.lat,
-                    longitude: data.end_latlng.lng
-                });
-                giobalThis.setState({
-                    end_location: {
-                        "latitude": pointer.coordinate.latitude,
-                        "longitude": pointer.coordinate.longitude
-                    },
-                    end_address: pointer.address
-                });
-            }
-            giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
         });
-        this.socket.on('get_ending_point_callback', async function (data) {
-            if (giobalThis.props.groupInfo.group_id != data.group_id) return;
-            console.log("get_ending_point_callback");
+
+        
+
+        this.socket.on('get_route_callback', async function(data){
+            console.log("get_route_callback");
             console.log(data);
-            if (data.hasOwnProperty("end_time")) {
-                giobalThis.setState({
-                    end_date: data.end_time
-                })
+            if (data.hasOwnProperty("start_latlng")) {
+                var pointer = await giobalThis.getPointerInfo({
+                    latitude: data.start_latlng.lat,
+                    longitude: data.start_latlng.lng
+                });
+                giobalThis.state.start_location = {
+                        "latitude": pointer.coordinate.latitude,
+                        "longitude": pointer.coordinate.longitude
+                };
+                giobalThis.state.start_address = pointer.address;
             }
+
             if (data.hasOwnProperty("end_latlng")) {
                 var pointer = await giobalThis.getPointerInfo({
                     latitude: data.end_latlng.lat,
                     longitude: data.end_latlng.lng
                 });
-                giobalThis.setState({
-                    end_location: {
+                giobalThis.state.end_location = {
                         "latitude": pointer.coordinate.latitude,
                         "longitude": pointer.coordinate.longitude
-                    },
-                    end_address: pointer.address
-                });
+                };
+                giobalThis.state.end_address = pointer.address;
             }
-            giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
-        });
-        this.socket.on('get_stopovers_callback', function (data) {
-            if (giobalThis.props.groupInfo.group_id != data.group_id) return;
-            /*data.stopovers.map(u => {
+
+            giobalThis.state.stopovers = [];
+            data.stopovers.map(u => {
                 giobalThis.state.stopovers.push({
                     "coordinate":
                     {
@@ -173,20 +127,7 @@ export default class RoomSetting extends Component {
                     }
                 });
             });
-            giobalThis.forceUpdate();*/
-        });
-
-        this.socket.on('add_stopover_callback', function (data) {
-            
-            if (giobalThis.props.groupInfo.group_id != data.group_id) return;
-            giobalThis.state.stopovers.push({
-                "coordinate":
-                {
-                    "latitude": data.latlng.lat,
-                    "longitude": data.latlng.lng
-                }
-            });
-            //giobalThis.forceUpdate();
+            giobalThis.animationMap();
             giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
         });
     }
@@ -194,26 +135,13 @@ export default class RoomSetting extends Component {
         this.socket.emit('get_starting_point', JSON.stringify({
             "group_id": this.props.groupInfo.group_id
         }));
-        this.socket.emit('get_stopovers', JSON.stringify({
-            "group_id": this.props.groupInfo.group_id
-        }));
-        this.socket.emit('get_starting_point', JSON.stringify({
-            "group_id": this.props.groupInfo.group_id
-        }));
         this.socket.emit('get_ending_point', JSON.stringify({
             "group_id": this.props.groupInfo.group_id
         }));
-
-    }
-    addStopoverToSocket(coordinate, position = 1) {
-        this.socket.emit("add_stopover", JSON.stringify({
-            "group_id": this.props.groupInfo.group_id,
-            "latlng": {
-                "lat": coordinate.latitude,
-                "lng": coordinate.longitude
-            },
-            "position": position
+        this.socket.emit('get_route', JSON.stringify({
+            "group_id": this.props.groupInfo.group_id
         }));
+
     }
     checkValid() {
         if (this.state.start_date === null || this.state.start_latlng === null) {
@@ -235,6 +163,7 @@ export default class RoomSetting extends Component {
                     "lng": this.state.start_location.longitude
                 }
             }));
+
             this.socket.emit('update_ending_point', JSON.stringify({
                 "group_id": this.props.groupInfo.group_id,
                 "end_time": this.state.end_date,
@@ -243,10 +172,38 @@ export default class RoomSetting extends Component {
                     "lng": this.state.end_location.longitude
                 }
             }));
-            this.state.stopovers.map(u => {
-                this.addStopoverToSocket(u.coordinate);
-            })
 
+            var tempStopovers = [];
+            for (var index = 0; index < this.state.stopovers.length; index++) {
+                tempStopovers.push({
+                    "latlng": {
+                        "lat": this.state.stopovers[index].coordinate.latitude,
+                        "lng": this.state.stopovers[index].coordinate.longitude
+                    }
+                })
+            }
+
+            this.socket.emit('add_route', JSON.stringify({
+                "group_id": this.props.groupInfo.group_id,
+                "start_latlng": {
+                    "lat": this.state.start_location.latitude,
+                    "lng": this.state.start_location.longitude
+                },
+                "end_latlng": {
+                    "lat": this.state.end_location.latitude,
+                    "lng": this.state.end_location.longitude
+                },
+                "stopovers": tempStopovers
+            }));
+
+            Alert.alert(
+                'Thông báo',
+                'Cập nhật thông tin phòng thành công',
+                [
+                    { text: 'Xác nhận', onPress: () => Actions.pop() },
+                ],
+                { cancelable: false }
+            )
         }
     }
     componentWillMount() {
@@ -397,7 +354,7 @@ export default class RoomSetting extends Component {
                     minIndex = index;
                 }
             }
-            if(minDistance === -1) return;
+            if (minDistance === -1) return;
             currentPoint = stopovers[minIndex].coordinate;
             directions.push(stopovers[minIndex].coordinate);
             stopovers.splice(minIndex, 1);
@@ -412,6 +369,15 @@ export default class RoomSetting extends Component {
         this.forceUpdate();
     }
 
+    animationMap(){
+        this.refs.map.animateToRegion({
+            latitude: (this.state.start_location.latitude + this.state.end_location.latitude)/2,
+            longitude: (this.state.start_location.longitude + this.state.end_location.longitude) / 2,
+            latitudeDelta: Math.abs(this.state.start_location.latitude - this.state.end_location.latitude)*1.5,
+            longitudeDelta: Math.abs(this.state.start_location.longitude - this.state.end_location.longitude)*1.5,
+        }, 2000);
+    }
+
     render() {
         return (
             <View style={{ flex: 1 }}>
@@ -421,11 +387,11 @@ export default class RoomSetting extends Component {
                     title={'Cài đặt phòng'}
                     onIconClicked={() => { Actions.pop() }}
                     onActionSelected={this.onActionSelected} />
-                <ScrollView style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 25 }}>Tên phòng:</Text>
+                <ScrollView style={{margin:5, flex: 1 }}>
+                    <Text style={{ fontSize: 25, color: 'black' }}>Tên phòng:</Text>
                     <View style={{ flexDirection: 'row' }}>
                         <TextInput
-                            style={{ flex: 1, fontSize: 25, marginHorizontal: 5 }}
+                            style={{ flex: 1, fontSize: 25, marginHorizontal: 5, color: 'dimgray' }}
                             onChangeText={(text) => this.setState({ room_name: text })}
                             value={this.state.room_name}
                             editable={this.state.editting_room_name}
@@ -441,14 +407,24 @@ export default class RoomSetting extends Component {
                         </Text>
                     </View>
 
-                    <Text style={{ fontSize: 25 }}>Ngày hẹn:</Text>
+                    <Text style={{ fontSize: 25, color: 'black' }}>Ngày bắt đầu:</Text>
                     <View style={{ flexDirection: 'row' }}>
-                        <Text style={{ fontSize: 15 }}>{this.state.start_date === null ? 'Chưa chọn thời gian hẹn' : '' + new Date(this.state.start_date)}</Text>
+                        <Text style={{ fontSize: 15 }}>{this.state.start_date === null ? 'Chưa chọn thời gian bắt đầu' : '' + new Date(this.state.start_date)}</Text>
                         <Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
                             onPress={this.showStartTimePicker}>
                             Sửa
                     </Text>
                     </View>
+
+                    <Text style={{ fontSize: 25, color: 'black' }}>Ngày kết thúc:</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                        <Text style={{ fontSize: 15 }}>{this.state.end_date === null ? 'Chưa chọn thời gian kết thúc' : '' + new Date(this.state.end_date)}</Text>
+                        <Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
+                            onPress={this.showEndTimePicker}>
+                            Sửa
+                    </Text>
+                    </View>
+
                     <View style={{ height: 0 }}>
                         <Text style={{ fontSize: 25 }}>Ngày kết thúc:</Text>
                         <View style={{ flexDirection: 'row' }}>
@@ -459,8 +435,9 @@ export default class RoomSetting extends Component {
                         </Text>
                         </View>
                     </View>
-                    <Text style={{ fontSize: 25 }}>Đánh dấu Điểm bắt đầu/Điểm kết thúc/Điểm dừng:</Text>
+                    <Text style={{ fontSize: 25, color: 'black' }}>Đánh dấu Điểm bắt đầu/Điểm kết thúc/Điểm dừng:</Text>
                     <MapView
+                        ref="map"
                         style={{ height: 250, width: width, marginVertical: 10 }}
                         onPress={this.onMapPress}>
                         {this.state.start_location !== null ?
@@ -473,8 +450,8 @@ export default class RoomSetting extends Component {
                             >
                                 <View>
                                     <Image
-                                        source={{ uri: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-2-Right-Pink-icon.png" }}
-                                        style={{ height: 50, width: 50 }}
+                                        source={require("../assets/map/map_startlocation_marker.png")}
+                                        style={{ height: 48, width: 48 }}
                                     />
                                 </View>
                             </MapView.Marker>
@@ -489,13 +466,13 @@ export default class RoomSetting extends Component {
                             >
                                 <View>
                                     <Image
-                                        source={{ uri: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Flag-4-Right-Pink-icon.png" }}
-                                        style={{ height: 50, width: 50 }}
+                                        source={require("../assets/map/map_endlocation_marker.png")}
+                                        style={{ height: 48, width: 48 }}
                                     />
                                 </View>
                             </MapView.Marker>
                             : <View />}
-                        {this.state.stopovers.map((u) => {
+                        {this.state.stopovers.map((u, i) => {
                             console.log(u);
                             return (
                                 <MapView.Marker
@@ -503,12 +480,17 @@ export default class RoomSetting extends Component {
                                     key={id++}
                                     coordinate={u.coordinate}
                                     draggable={true}
-                                    onDragEnd={(e) => { }}
+                                    onDragEnd={(e) => {
+                                        this.state.stopovers[i] = {
+                                        "coordinate": e.nativeEvent.coordinate
+                                        };
+                                        this.findDirection(this.state.start_location, this.state.end_location);
+                                    }}
                                 >
                                     <View>
                                         <Image
-                                            source={{ uri: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/256/Map-Marker-Ball-Pink-icon.png" }}
-                                            style={{ height: 50, width: 50 }}
+                                            source={require("../assets/map/map_stopover_marker.png")}
+                                            style={{ height: 48, width: 48 }}
                                         />
                                     </View>
                                 </MapView.Marker>)
@@ -519,7 +501,7 @@ export default class RoomSetting extends Component {
                         />
                     </MapView>
                     <Button
-                        onPress={() => this.updateSocketData()}
+                        onPress={() => { this.updateSocketData(); }}
                         title="Hoàn tất"
                         color="#840384" />
                 </ScrollView>
