@@ -135,7 +135,7 @@ dependencies {
     compile ("com.android.support:appcompat-v7:23.0.1"){
         exclude group: 'com.google.android', module: 'support-v4'
     }
-
+    compile project(':react-native-splash-screen')
     compile "com.facebook.react:react-native:+"  // From node_modules
 	compile project(':react-native-dialogs')
 	compile project(':react-native-vector-icons')

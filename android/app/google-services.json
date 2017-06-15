@@ -1,27 +1,71 @@
 {
   "project_info": {
-    "project_number": "425145670455",
-    "firebase_url": "https://togo-app-4f4f6.firebaseio.com",
-    "project_id": "togo-app-4f4f6",
-    "storage_bucket": "togo-app-4f4f6.appspot.com"
+    "project_number": "693185365654",
+    "firebase_url": "https://locationapp-f02ac.firebaseio.com",
+    "project_id": "locationapp-f02ac",
+    "storage_bucket": "locationapp-f02ac.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:425145670455:android:c6a8a200448b300f",
+        "mobilesdk_app_id": "1:693185365654:android:2c348f9a0e30ad35",
+        "android_client_info": {
+          "package_name": "com.google.firebase.luanvan.locationapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "693185365654-843jsbtm2g3qgjng1qdhqjs6b2883gi4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.google.firebase.luanvan.locationapp",
+            "certificate_hash": "8763bcf9b8634d8c77d30af9e6d8aa37ea04fccd"
+          }
+        },
+        {
+          "client_id": "693185365654-ov3dchvcqkhjt6uv01cq5j2gqoao2j1q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9LYgbxKnGy2MkUu2zz18CPkFFEyOFgKA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "693185365654-ov3dchvcqkhjt6uv01cq5j2gqoao2j1q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:693185365654:android:c6a8a200448b300f",
         "android_client_info": {
           "package_name": "com.locationclient"
         }
       },
       "oauth_client": [
         {
-          "client_id": "425145670455-vrml0acu9051evnqevp6s6r9b1vebh7o.apps.googleusercontent.com",
+          "client_id": "693185365654-ov3dchvcqkhjt6uv01cq5j2gqoao2j1q.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDM-6BM0IoTPxYm2RrxZBWCEvHxtlv4Fy4"
+          "current_key": "AIzaSyC9LYgbxKnGy2MkUu2zz18CPkFFEyOFgKA"
         }
       ],
       "services": {

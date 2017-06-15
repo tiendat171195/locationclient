@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import {
   AppRegistry,
+  Alert
 } from 'react-native';
 import { Scene, Router } from 'react-native-router-flux';
 
@@ -17,9 +18,20 @@ import CreateRoom from './components/CreateRoom'
 import RoomSetting from './components/RoomSetting.js';
 import FriendsList from './components/FriendsList.js';
 
+import SplashScreen from 'react-native-splash-screen';
+
 export default class LocationClient extends Component {
   constructor(props) {
     super(props);
+
+    
+
+
+  }
+  componentDidMount() {
+    // do stuff while splash screen is shown
+    // After having done stuff (such as async tasks) hide the splash screen
+    SplashScreen.hide();
   }
   render() {
     return (
