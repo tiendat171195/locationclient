@@ -12,7 +12,8 @@ import {
 	AsyncStorage,
 	ScrollView,
 	StyleSheet,
-	TouchableOpacity
+	TouchableOpacity,
+	findNodeHandle
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 
@@ -22,12 +23,15 @@ const ASPECT_RATIO = width / height;
 import MainScreen from './MainScreen.js';
 import TabBarExample from './MainScreen.js';
 import apis from '../apis/api.js';
+import { BlurView, VibrancyView } from 'react-native-blur';
+
 export default class Login extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			username: '',
-			password: ''
+			password: '',
+			viewRef: null,
 		};
 	}
 	componentWillMount() {
@@ -77,22 +81,7 @@ export default class Login extends Component {
 			);
 		}
 	}
-	async SignUp() {
-		let responseAPI = await apis.SignUp(this.state.username, this.state.password);
-
-		if (!responseAPI.hasOwnProperty('success')) {
-			Alert.alert(
-				'Đăng ký thành công',
-				'Chúc mừng bạn đã đăng ký thành công'
-			)
-		}
-		else {
-			Alert.alert(
-				'Đăng ký thất bại',
-				responseAPI.status_message
-			)
-		}
-	}
+	
 	checkUserInput() {
 		if (this.state.username.length < 6) {
 			return { status: 'error', message: 'Tên đăng nhập phải trên 6 ký tự' };
@@ -104,32 +93,38 @@ export default class Login extends Component {
 	}
 	render() {
 		return (
+			<View>
+			
 			<Image
 				source={require('../assets/screen.jpg')}
 				resizeMode='cover'
-				style={{ width: width, height: height }} >
+				style={{ width: width, height: height }}
+				 >
 				
 				<ScrollView style={{ flex: 1 }}>
 					<View style={{width:width, height:height, flexDirection:'column', flex:1, justifyContent:'space-between'}}>
 						<View style={{margin: 20}}>
+
 							<Image
 								source={require('../assets/image/logo.png')}
 								resizeMode='contain'
 								style={{ height: 200, width: 200, alignSelf:'center' }} />
 						</View>
 						<View>
-							<View style={{ paddingHorizontal: 5,margin: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center' }}>
+							<View style={{ paddingHorizontal: 5,margin: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center',  }}>
 								<View style={{ borderRadius: 15, flex: 1, opacity: 0.65, backgroundColor: 'orange', ...StyleSheet.absoluteFillObject }} />
+								
 								<Image
 									source={require('../assets/image/tendangnhap.png')}
 									resizeMode='contain'
 									style={{ height: 50, width: 50 }} />
 								<TextInput
-									style={{ flex: 1, fontSize: 20, color: "cyan" }}
+										style={{ flex: 1, fontSize: 25, color: "black", fontFamily: 'sans-serif', fontWeight:'bold' }}
 									onChangeText={(userName) => this.setState({ username: userName })}
 									value={this.state.username}
 									placeholder="Tên đăng nhập"
-									placeholderTextColor="deepskyblue" />
+									placeholderTextColor="black"
+									underlineColorAndroid = 'black' />
 							</View>
 							<View style={{ paddingHorizontal:5, margin: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center' }}>
 								<View style={{ borderRadius: 15, flex: 1, opacity: 0.65, backgroundColor: 'orange', ...StyleSheet.absoluteFillObject }} />
@@ -138,15 +133,16 @@ export default class Login extends Component {
 									resizeMode='contain'
 									style={{ height: 50, width: 50 }} />
 								<TextInput
-									style={{ flex: 1, fontSize: 20, color: "cyan" }}
+										style={{ flex: 1, fontSize: 25, color: "black", fontFamily: 'sans-serif', fontWeight: 'bold' }}
 									onChangeText={(passWord) => this.setState({ password: passWord })}
 									value={this.state.password}
 									placeholder="Mật khẩu"
-									placeholderTextColor="deepskyblue"
+									placeholderTextColor="black"
+									underlineColorAndroid='black'
 									secureTextEntry={true} />
 							</View>
 							<View
-								style={{ width: width - 100, alignSelf: 'center', alignItems:'center' }}>
+								style={{ width: width - 100, alignSelf: 'center' }}>
 								<Button
 
 									onPress={() => {
@@ -166,15 +162,16 @@ export default class Login extends Component {
 						</View>
 						<View style={{ alignSelf: 'center', marginBottom: 50 }}>
 						<TouchableOpacity
-							
-							onPress={() => this.SignUp()}>
-								<Text style={{ color: 'darkslategrey', fontWeight: 'bold', fontSize: 15 }}>Chưa có tài khoản? Tạo tài khoản mới</Text>
+									onPress={() => Actions.register()}>
+								<Text style={{ color: 'darkslategrey', fontWeight: 'bold', fontSize: 15, fontFamily: 'sans-serif' }}>Chưa có tài khoản? Tạo tài khoản mới</Text>
 						</TouchableOpacity>
 						</View>
 					</View>
 					
 				</ScrollView>
 			</Image>
+			
+			</View>
 		);
 	}
 }
