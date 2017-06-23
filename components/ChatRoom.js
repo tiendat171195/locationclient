@@ -15,7 +15,8 @@ import io from 'socket.io-client/dist/socket.io.js';
 import DialogAndroid from 'react-native-dialogs';
 import apis from '../apis/api.js';
 import RoomSetting from './RoomSetting.js';
-
+//const API_path = 'http://192.168.83.2:3000/';
+const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 var myThis;
 let id = 99999999;
 export default class ChatRoom extends Component {
@@ -81,7 +82,7 @@ export default class ChatRoom extends Component {
 		});
 	}
 	startSocket() {
-		this.socket = io('http://192.168.83.2:3000/chats?group_id=' + this.props.groupInfo.group_id, { jsonp: false });
+		this.socket = io(API_path + 'chats?group_id=' + this.props.groupInfo.group_id, { jsonp: false });
 		this.socket.emit('authenticate', { "token": this.props.userInfo.token });
 		this.socket.on('authenticated', function () {
 			myThis.addSocketCallback();

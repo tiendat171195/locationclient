@@ -31,6 +31,8 @@ const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 var giobalThis;
 var id = 100;
+//const API_path = 'http://192.168.83.2:3000/';
+const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 export default class RoomSetting extends Component {
     constructor(props) {
         super(props);
@@ -46,6 +48,8 @@ export default class RoomSetting extends Component {
             end_date: null,
             stopovers: [],
             direction_coordinates: [],
+            appointments: [],
+            previousNumAppointments: 0,
         };
         this.showEndDatePicker = this.showEndDatePicker.bind(this);
         this.showStartDatePicker = this.showStartDatePicker.bind(this);
@@ -59,7 +63,7 @@ export default class RoomSetting extends Component {
     startNewSocket(groupID) {
         if (groupID === null) return;
         if (this.socket !== undefined) this.socket.disconnect();
-        this.socket = io('http://192.168.83.2:3000/maps?group_id=' + groupID, { jsonp: false });
+        this.socket = io(API_path + 'maps?group_id=' + groupID, { jsonp: false });
         this.socket.emit('authenticate', { "token": this.props.userInfo.token });
         this.socket.on('authenticated', function () {
             giobalThis.addSocketCallback();
@@ -130,6 +134,22 @@ export default class RoomSetting extends Component {
             giobalThis.animationMap();
             giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
         });
+        this.socket.on('get_appointments_callback', function (data) {
+            console.log("get_appointments_callback");
+            console.log(data);
+            giobalThis.state.appointments = [];
+            
+            data.appointments.map(u=>{
+                giobalThis.state.appointments.push({
+                    "coordinate":
+                    {
+                        "latitude": u.latlng.lat,
+                        "longitude": u.latlng.lng
+                    }
+                })
+                giobalThis.state.previousNumAppointments++;
+            });
+        });
     }
     getSocketData(groupID) {
         this.socket.emit('get_starting_point', JSON.stringify({
@@ -139,6 +159,9 @@ export default class RoomSetting extends Component {
             "group_id": this.props.groupInfo.group_id
         }));
         this.socket.emit('get_route', JSON.stringify({
+            "group_id": this.props.groupInfo.group_id
+        }));
+        this.socket.emit('get_appointments', JSON.stringify({
             "group_id": this.props.groupInfo.group_id
         }));
 
@@ -195,6 +218,20 @@ export default class RoomSetting extends Component {
                 },
                 "stopovers": tempStopovers
             }));
+
+            for (var index = this.state.previousNumAppointments; index < this.state.appointments.length; index++) {
+                this.socket.emit('add_appointment', JSON.stringify({
+                    "group_id": this.props.groupInfo.group_id,
+                    "address": "",
+                    "start_time": 0,
+                    "end_time": 0,
+                    "latlng": {
+                        "lat": this.state.appointments[index].coordinate.latitude,
+                        "lng": this.state.appointments[index].coordinate.longitude
+                    }
+                }));
+                
+            }
 
             Alert.alert(
                 'Thông báo',
@@ -301,7 +338,8 @@ export default class RoomSetting extends Component {
             items: [
                 "Điểm bắt đầu",
                 "Điểm kết thúc",
-                "Điểm dừng chân"
+                "Điểm dừng chân",
+                "Điểm hẹn"
             ],
             negativeText: 'Hủy',
             itemsCallback: (id, text) => this.addMarkerOnMap(location, id),
@@ -329,6 +367,10 @@ export default class RoomSetting extends Component {
                 this.state.stopovers.push(marker);
                 this.forceUpdate();
                 this.findDirection(this.state.start_location, this.state.end_location);
+                break;
+            case 3:
+                this.state.appointments.push(marker);
+                this.forceUpdate();
                 break;
             default:
                 break;
@@ -387,7 +429,103 @@ export default class RoomSetting extends Component {
                     title={'Cài đặt phòng'}
                     onIconClicked={() => { Actions.pop() }}
                     onActionSelected={this.onActionSelected} />
-                <ScrollView style={{margin:5, flex: 1 }}>
+                <ScrollView style={{flex: 1 }}>
+                    <View style={{ height: 250, width: width, margin:0, marginBottom: 10 }}>
+                        <MapView
+                            ref="map"
+                            style={{ flex: 1, ...StyleSheet.absoluteFillObject }}
+                            onPress={this.onMapPress}>
+                            {this.state.start_location !== null ?
+                                <MapView.Marker
+                                    title='Điểm bắt đầu'
+                                    key={1}
+                                    coordinate={this.state.start_location}
+                                    draggable={true}
+                                    onDragEnd={(e) => this.addMarkerOnMap(e.nativeEvent.coordinate, 0)}
+                                >
+                                    <View>
+                                        <Image
+                                            source={require("../assets/map/map_startlocation_marker.png")}
+                                            style={{ height: 48, width: 48 }}
+                                        />
+                                    </View>
+                                </MapView.Marker>
+                                : <View />}
+                            {this.state.end_location !== null ?
+                                <MapView.Marker
+                                    title='Điểm kết thúc'
+                                    key={2}
+                                    coordinate={this.state.end_location}
+                                    draggable={true}
+                                    onDragEnd={(e) => this.addMarkerOnMap(e.nativeEvent.coordinate, 1)}
+                                >
+                                    <View>
+                                        <Image
+                                            source={require("../assets/map/map_endlocation_marker.png")}
+                                            style={{ height: 48, width: 48 }}
+                                        />
+                                    </View>
+                                </MapView.Marker>
+                                : <View />}
+                            {this.state.stopovers.map((u, i) => {
+                                console.log(u);
+                                return (
+                                    <MapView.Marker
+                                        title='Điểm dừng chân'
+                                        key={id++}
+                                        coordinate={u.coordinate}
+                                        draggable={true}
+                                        onDragEnd={(e) => {
+                                            this.state.stopovers[i] = {
+                                                "coordinate": e.nativeEvent.coordinate
+                                            };
+                                            this.findDirection(this.state.start_location, this.state.end_location);
+                                        }}
+                                    >
+                                        <View>
+                                            <Image
+                                                source={require("../assets/map/map_stopover_marker.png")}
+                                                style={{ height: 48, width: 48 }}
+                                            />
+                                        </View>
+                                    </MapView.Marker>)
+                            })}
+                            {this.state.appointments.map((u, i) => {
+                                return (
+                                    <MapView.Marker
+                                        title='Điểm hẹn'
+                                        key={id++}
+                                        coordinate={u.coordinate}
+                                        
+                                    >
+                                    </MapView.Marker>)
+                            })}
+                            <MapView.Polyline
+                                coordinates={this.state.direction_coordinates}
+                                strokeWidth={5}
+                            />
+                        </MapView>
+                        <ScrollView style={{ backgroundColor: 'navajowhite', width: 70, height: 250, top: 0, left: width - 70 }}>
+                            <TouchableOpacity style={{ margin: 5, marginLeft: 0, alignItems: "center" }}>
+                                <Image
+                                    source={require("../assets/map/map_startlocation_marker.png")}
+                                    style={{ height: 48, width: 48, alignItems: 'center' }} />
+                                <Text style={{ textAlign: 'center' }}>Bắt đầu</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{ margin: 5, marginLeft: 0, alignItems: "center" }}>
+                                <Image
+                                    source={require("../assets/map/map_endlocation_marker.png")}
+                                    style={{ height: 48, width: 48, alignItems: 'center' }} />
+                                <Text style={{ textAlign: 'center' }}>Kết thúc</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{ margin: 5, marginLeft: 0, alignItems: "center" }}>
+                                <Image
+                                    source={require("../assets/map/map_stopover_marker.png")}
+                                    style={{ height: 48, width: 48, alignItems: 'center' }} />
+                                <Text style={{ textAlign: 'center' }}>Dừng chân</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+                    </View>
                     <Text style={{ fontSize: 25, color: 'black' }}>Tên phòng:</Text>
                     <View style={{ flexDirection: 'row' }}>
                         <TextInput
@@ -408,7 +546,7 @@ export default class RoomSetting extends Component {
                     </View>
 
                     <Text style={{ fontSize: 25, color: 'black' }}>Ngày bắt đầu:</Text>
-                    <View style={{ flexDirection: 'row' }}>
+                    <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
                         <Text style={{ fontSize: 15 }}>{this.state.start_date === null ? 'Chưa chọn thời gian bắt đầu' : '' + new Date(this.state.start_date)}</Text>
                         <Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
                             onPress={this.showStartTimePicker}>
@@ -417,7 +555,7 @@ export default class RoomSetting extends Component {
                     </View>
 
                     <Text style={{ fontSize: 25, color: 'black' }}>Ngày kết thúc:</Text>
-                    <View style={{ flexDirection: 'row' }}>
+                    <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
                         <Text style={{ fontSize: 15 }}>{this.state.end_date === null ? 'Chưa chọn thời gian kết thúc' : '' + new Date(this.state.end_date)}</Text>
                         <Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
                             onPress={this.showEndTimePicker}>
@@ -435,72 +573,8 @@ export default class RoomSetting extends Component {
                         </Text>
                         </View>
                     </View>
-                    <Text style={{ fontSize: 25, color: 'black' }}>Đánh dấu Điểm bắt đầu/Điểm kết thúc/Điểm dừng:</Text>
-                    <MapView
-                        ref="map"
-                        style={{ height: 250, width: width, marginVertical: 10 }}
-                        onPress={this.onMapPress}>
-                        {this.state.start_location !== null ?
-                            <MapView.Marker
-                                title='Điểm bắt đầu'
-                                key={1}
-                                coordinate={this.state.start_location}
-                                draggable={true}
-                                onDragEnd={(e) => this.addMarkerOnMap(e.nativeEvent.coordinate, 0)}
-                            >
-                                <View>
-                                    <Image
-                                        source={require("../assets/map/map_startlocation_marker.png")}
-                                        style={{ height: 48, width: 48 }}
-                                    />
-                                </View>
-                            </MapView.Marker>
-                            : <View />}
-                        {this.state.end_location !== null ?
-                            <MapView.Marker
-                                title='Điểm kết thúc'
-                                key={2}
-                                coordinate={this.state.end_location}
-                                draggable={true}
-                                onDragEnd={(e) => this.addMarkerOnMap(e.nativeEvent.coordinate, 1)}
-                            >
-                                <View>
-                                    <Image
-                                        source={require("../assets/map/map_endlocation_marker.png")}
-                                        style={{ height: 48, width: 48 }}
-                                    />
-                                </View>
-                            </MapView.Marker>
-                            : <View />}
-                        {this.state.stopovers.map((u, i) => {
-                            console.log(u);
-                            return (
-                                <MapView.Marker
-                                    title='Điểm dừng chân'
-                                    key={id++}
-                                    coordinate={u.coordinate}
-                                    draggable={true}
-                                    onDragEnd={(e) => {
-                                        this.state.stopovers[i] = {
-                                        "coordinate": e.nativeEvent.coordinate
-                                        };
-                                        this.findDirection(this.state.start_location, this.state.end_location);
-                                    }}
-                                >
-                                    <View>
-                                        <Image
-                                            source={require("../assets/map/map_stopover_marker.png")}
-                                            style={{ height: 48, width: 48 }}
-                                        />
-                                    </View>
-                                </MapView.Marker>)
-                        })}
-                        <MapView.Polyline
-                            coordinates={this.state.direction_coordinates}
-                            strokeWidth={5}
-                        />
-                    </MapView>
                     <Button
+                        style={{marginTop:10}}
                         onPress={() => { this.updateSocketData(); }}
                         title="Hoàn tất"
                         color="#840384" />

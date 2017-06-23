@@ -2,8 +2,8 @@ import {
 	Alert,
 	AsyncStorage
 } from 'react-native';
-const API_path = 'http://192.168.83.2:3000/';
-//const API_path = ' https://stormy-woodland-18039.herokuapp.com/';
+//const API_path = 'http://192.168.83.2:3000/';
+const API_path = ' https://stormy-woodland-18039.herokuapp.com/';
 const googleAPI_key = "AIzaSyB2jkGH3HlHuXQ4OQx7wtp96mjjXIHC0rU";
 var token = '';
 var user_id = '';
@@ -12,7 +12,51 @@ var apis = {
 			token = _token;
 			user_id = _id;
 	},
-	async SignUp(username, password){
+	async Subscribe(fcmToken) {
+		try {
+			let response = await fetch(API_path + 'notification/subscribe/',
+				{
+					"method": "POST",
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/json',
+						'token': token
+					},
+					body: JSON.stringify({
+						fcm_token: fcmToken
+					})
+				});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch (error) {
+			console.error(error);
+			return null;
+		}
+	},
+	async Unsubscribe(fcmToken) {
+		try {
+			let response = await fetch(API_path + 'notification/subscribe/',
+				{
+					"method": "POST",
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/json',
+						'token': token
+					},
+					body: JSON.stringify({
+						fcm_token: fcmToken
+					})
+				});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch (error) {
+			console.error(error);
+			return null;
+		}
+	},
+	async SignUp(username, password, phone, email, gender, birthday, city){
 		try{
 			let response = await fetch(API_path + 'auth/register/', 
 			{"method": "POST",
@@ -23,6 +67,11 @@ var apis = {
 				body: JSON.stringify({
 						username: username,
 						password: password,
+						phone: phone,
+						email: email,
+						gender: gender,
+						birthday: birthday,
+						city: city
 				})
 			});
       let responseJson = await response.json();
@@ -283,7 +332,7 @@ var apis = {
 			return null;
 		}
 	},
-	async findDirection_googleAPI(origin, destination){
+	async findDirection_googleAPI(origin, destination, waypoints = []){
 		try{
 			const directionAPI_path = "https://maps.googleapis.com/maps/api/directions/json?";
 			console.log(directionAPI_path + 

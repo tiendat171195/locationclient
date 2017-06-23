@@ -66,6 +66,7 @@ export default class Login extends Component {
 				console.error(error);
 			}
 			apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
+			console.log(responseAPI);
 			Actions.mainscreen({
 				'userInfo': {
 					'token': responseAPI.user_token,

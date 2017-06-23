@@ -11,7 +11,10 @@ import {
   nativeImageSource,
   Image,
   Button,
-  ScrollView
+  ScrollView,
+  TouchableOpacity,
+  Picker,
+  ListView
 } from 'react-native';
 import MapView from 'react-native-maps';
 import ActionButton from 'react-native-action-button';
@@ -27,7 +30,8 @@ const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 let id = 100;
-
+//const API_path = 'http://192.168.83.2:3000/';
+const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 const customStyle = [
   /*{
     elementType: 'geometry',
@@ -192,9 +196,11 @@ const customStyle = [
 
 
 var giobalThis;
+const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
 export default class MapPage extends Component {
   constructor(props) {
     super(props);
+    
     giobalThis = this;
     this.state = {
       markers: [],
@@ -215,8 +221,12 @@ export default class MapPage extends Component {
       direction_coordinates: [],
       arriving_users: [],
       destination_users: [],
-      mapType: "standard"
-    };
+      mapType: "standard",
+      groundName: '',
+      dataMembersSource: ds.cloneWithRows([]),
+      dataRoutesSource: ds.cloneWithRows([]),
+      appointments: [],
+		};
 
 
     this.bindThis = this.bindThis.bind(this);
@@ -236,8 +246,8 @@ export default class MapPage extends Component {
     this.findRouteDirection = this.findRouteDirection.bind(this);
   }
   componentWillMount() {
-    this.startNewSocket(this.state.groupID);
     this.GetRoomList(this.props.userInfo.user_id);
+    this.startNewSocket(this.state.groupID);
     this.startGeolocation();
   }
   getSocketData(groupID) {
@@ -263,9 +273,10 @@ export default class MapPage extends Component {
     this.socket.emit('get_ending_point', JSON.stringify({
       "group_id": groupID
     }));
-    this.socket.emit("get_arriving_users", JSON.stringify({
+    this.socket.emit('get_appointments', JSON.stringify({
       "group_id": groupID
     }));
+
 
   }
   addSocketCallback() {
@@ -309,20 +320,23 @@ export default class MapPage extends Component {
 
     //Get all members' location
     this.socket.on('get_latlngs_callback', function (data) {
+      console.log(data);
       if (data.hasOwnProperty('success')) return;
       if (data.group_id != giobalThis.state.groupID) return;
 
       giobalThis.state.members = [];
       for (var index = 0; index < data.latlngs.length; index++) {
-        giobalThis.state.members.push({ '_id': data.latlngs[index]._id, 'coordinate': { 'latitude': data.latlngs[index].latlng.lat, 'longitude': data.latlngs[index].latlng.lng }, 'key': data.latlngs[index]._id });
+        giobalThis.state.members.push({ '_id': data.latlngs[index]._id, 'username': data.latlngs[index].username, 'coordinate': { 'latitude': data.latlngs[index].latlng.lat, 'longitude': data.latlngs[index].latlng.lng }, 'key': data.latlngs[index]._id });
       }
+      giobalThis.state.dataMembersSource = ds.cloneWithRows(giobalThis.state.members);
       giobalThis.forceUpdate();
     });
 
     //Update 1 member's location
     this.socket.on('update_latlng_callback', function (data) {
-      if (data.group_id != giobalThis.state.groupID || data.user_id == giobalThis.props.userInfo.user_id) return;
+      if (data.user_id == giobalThis.props.userInfo.user_id) return;
       giobalThis.replaceLocationById(data.user_id, { 'latitude': data.latlng.lat, 'longitude': data.latlng.lng });
+      console.log(data.user_id);
       giobalThis.forceUpdate();
     });
 
@@ -342,8 +356,6 @@ export default class MapPage extends Component {
     });
 
     this.socket.on('get_route_callback', async function (data) {
-      console.log("get_route_callback");
-      console.log(data);
       if (data.hasOwnProperty("start_latlng")) {
         var pointer = await giobalThis.getPointerInfo({
           latitude: data.start_latlng.lat,
@@ -491,11 +503,28 @@ export default class MapPage extends Component {
         }
       });
     });
+
+    this.socket.on("get_appointments_callback", function (data) {
+      giobalThis.state.appointments = [];
+
+      data.appointments.map(u => {
+        giobalThis.state.appointments.push({
+          "coordinate":
+          {
+            "latitude": u.latlng.lat,
+            "longitude": u.latlng.lng
+          }
+        })
+      });
+      giobalThis.state.dataRoutesSource = ds.cloneWithRows(giobalThis.state.appointments);
+      console.log("giobalThis.state.dataRoutesSource")
+      console.log(giobalThis.state.dataRoutesSource)
+    });
   }
   startNewSocket(groupID) {
     if (groupID === null) return;
     if (this.socket !== undefined) this.socket.disconnect();
-    this.socket = io('http://192.168.83.2:3000/maps?group_id=' + groupID + '/', { jsonp: false });
+    this.socket = io(API_path + 'maps?group_id=' + groupID + '/', { jsonp: false });
     this.socket.emit('authenticate', { "token": this.props.userInfo.token });
     this.socket.on('authenticated', function () {
       giobalThis.addSocketCallback();
@@ -619,11 +648,29 @@ export default class MapPage extends Component {
 
       }
     });
+    if (this.state.direction_coordinates.length > 0){
+      console.log("direction_coordinates");
+      console.log(this.state.direction_coordinates);
+      /*let tempDistanceMin = await apis.distance_googleAPI(this.state.currentRegion, this.state.direction_coordinates[0].coordinate);
+      for (var index = 0; index < this.state.direction_coordinates.length; index++) {
+        let distance = await apis.distance_googleAPI(this.state.currentRegion, this.state.direction_coordinates[index].coordinate);
+        if (distance < tempDistanceMin) {
+          tempDistanceMin = distance;
+        }
+      }
+      if(tempDistanceMin > 1000){
+        Alert.alert(
+          "Thông báo",
+          'Bạn đã đi lạc'
+        );
+      }*/
+    }
+    
   }
 
   updateCurrentLatlng(groupID, position) {
     if (groupID === null) return;
-    this.calculateDistanceThisUser();
+
     this.socket.emit('update_latlng', JSON.stringify({
       'user_id': this.props.userInfo.user_id,
       'group_id': this.state.groupID,
@@ -633,6 +680,7 @@ export default class MapPage extends Component {
         'lng': position.coords.longitude
       }
     }));
+    this.calculateDistanceThisUser();
     this.forceUpdate();
   }
   async startGeolocation() {
@@ -690,7 +738,7 @@ export default class MapPage extends Component {
   }
   componentWillUnmount() {
     console.log("Unmount");
-    navigator.geolocation.clearWatch(this.state.watchID);
+    //navigator.geolocation.clearWatch(this.state.watchID);
   }
   _decode(t, e) {
     for (var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0, a = null, c = Math.pow(10, e || 5); u < t.length;) { a = null, h = 0, i = 0; do a = t.charCodeAt(u++) - 63, i |= (31 & a) << h, h += 5; while (a >= 32); n = 1 & i ? ~(i >> 1) : i >> 1, h = i = 0; do a = t.charCodeAt(u++) - 63, i |= (31 & a) << h, h += 5; while (a >= 32); o = 1 & i ? ~(i >> 1) : i >> 1, l += n, r += o, d.push([l / c, r / c]) } return d = d.map(function (t) { return { latitude: t[0], longitude: t[1] } })
@@ -704,8 +752,7 @@ export default class MapPage extends Component {
     })
   }
   async findRouteDirection() {
-    console.log("find route");
-    console.log(this.state.stopovers);
+
     if (this.state.start_location === null || this.state.end_location === null) return;
 
     var directions = [];
@@ -741,12 +788,6 @@ export default class MapPage extends Component {
   onActionSelected(position) {
     switch (position) {
       case 0:
-        if (this.state.currentRegion !== null) {
-          this.refs.map.animateToRegion(this.state.currentRegion, 2000);
-        }
-
-        break;
-      case 1:
         this.setState({
           openSearch: !this.state.openSearch
         });
@@ -764,10 +805,13 @@ export default class MapPage extends Component {
     this.setState({
       _roomList: []
     });
+    if (responseAPI.groups.length <=0) return;
     for (var index = 0; index < responseAPI.groups.length; index++) {
       this.state._roomList.push(responseAPI.groups[index]);
     }
-    this.forceUpdate();
+    this.state.groupName = this.state._roomList[0].name;
+    this.state.groupID = this.state._roomList[0]._id;
+    this.startNewSocket(this.state.groupID);
   }
   async getPointerInfo(location) {
     try {
@@ -800,12 +844,25 @@ export default class MapPage extends Component {
       <View style={{ flex: 1 }}>
         <ToolbarAndroid
           style={{ height: 50, backgroundColor: 'sandybrown' }}
-          title="Bản đồ"
+          title={this.state.groupName}
           navIcon={{ uri: "https://cdn4.iconfinder.com/data/icons/wirecons-free-vector-icons/32/menu-alt-512.png", width: 48, height: 48 }}
           onIconClicked={() => this.state.openDrawer ? this.refs.drawer.closeDrawer() : this.refs.drawer.openDrawer()}
-          actions={[{ title: 'Định vị', icon: require("../assets/map/navbar_gps_icon.png"), show: 'always' },
-          { title: 'Tìm kiếm', icon: require("../assets/menu/navbar_search.png"), show: 'always' },]}
-          onActionSelected={this.onActionSelected} />
+           >
+          {/*<Picker
+            style={{width: width/4}}
+            itemStyle={{backgroundColor:'orange'}}
+            selectedValue={this.state.groupName}
+            onValueChange={(itemValue, itemIndex) => {this.state.groupID = itemValue; 
+                                                      this.state.groupName = this.state._roomList[itemIndex].name;
+                                                      this.startNewSocket(this.state.groupID);}}
+            mode='dropdown'>
+            {this.state._roomList.map((u, i) =>{
+              return(
+                <Picker.Item label={u.name} value={u._id} key={u._id} />
+              );
+            })}
+          </Picker>*/}
+          </ToolbarAndroid>
         {this.state.openSearch ?
           <Search
             ref="searchbox"
@@ -821,14 +878,15 @@ export default class MapPage extends Component {
         <DrawerLayoutAndroid
           ref="drawer"
           drawerWidth={200}
+          drawerLockMode='locked-open'
           drawerPosition={DrawerLayoutAndroid.positions.Left}
           onDrawerClose={() => this.state.openDrawer = false}
           onDrawerOpen={() => this.state.openDrawer = true}
           renderNavigationView={() =>
-            <ScrollView style={{ backgroundColor: "#fdf5e6"}}>
+            <ScrollView style={{ backgroundColor: "#fdf5e6" }}>
               <View>
                 <Text style={{
-                  fontFamily: 'fantasy',
+                  fontFamily: 'sans-serif',
                   fontSize: 20,
                   color: 'blue',
                   textAlign: 'left',
@@ -839,10 +897,10 @@ export default class MapPage extends Component {
                 </Text>
                 <Card containerStyle={{ margin: 0, padding: 0, backgroundColor: "#fdf5e6" }} >
                   <ListItem
-                    titleStyle={this.state.mapType == "standard" ? { fontSize: 20, fontFamily: 'fantasy', fontWeight: 'bold'}:
-                                                                  { fontSize: 20, fontFamily: 'fantasy'}}
+                    titleStyle={this.state.mapType == "standard" ? { fontSize: 20, fontFamily: 'sans-serif', fontWeight: 'bold' } :
+                      { fontSize: 20, fontFamily: 'sans-serif' }}
                     underlayColor="#ffefd5"
-                    containerStyle={this.state.mapType == "standard" ? { backgroundColor: "#ffefd5"} : {}}                  
+                    containerStyle={this.state.mapType == "standard" ? { backgroundColor: "#ffefd5" } : {}}
                     title="Cơ bản"
                     onPress={() => {
                       this.setState({
@@ -851,10 +909,10 @@ export default class MapPage extends Component {
                       this.refs.drawer.closeDrawer();
                     }} />
                   <ListItem
-                    titleStyle={this.state.mapType == "satellite" ? { fontSize: 20, fontFamily: 'fantasy', fontWeight: 'bold' } :
-                                                                  { fontSize: 20, fontFamily: 'fantasy' }}
+                    titleStyle={this.state.mapType == "satellite" ? { fontSize: 20, fontFamily: 'sans-serif', fontWeight: 'bold' } :
+                      { fontSize: 20, fontFamily: 'sans-serif' }}
                     underlayColor="#ffefd5"
-                    containerStyle={this.state.mapType == "satellite" ? { backgroundColor: "#ffefd5" } : {}}    
+                    containerStyle={this.state.mapType == "satellite" ? { backgroundColor: "#ffefd5" } : {}}
                     title="Vệ tinh"
                     onPress={() => {
                       this.setState({
@@ -863,10 +921,10 @@ export default class MapPage extends Component {
                       this.refs.drawer.closeDrawer();
                     }} />
                   <ListItem
-                    titleStyle={this.state.mapType == "hybrid" ? { fontSize: 20, fontFamily: 'fantasy', fontWeight: 'bold' } :
-                                                                  { fontSize: 20, fontFamily: 'fantasy' }}
+                    titleStyle={this.state.mapType == "hybrid" ? { fontSize: 20, fontFamily: 'sans-serif', fontWeight: 'bold' } :
+                      { fontSize: 20, fontFamily: 'sans-serif' }}
                     underlayColor="#ffefd5"
-                    containerStyle={this.state.mapType == "hybrid" ? { backgroundColor: "#ffefd5" } : {}}    
+                    containerStyle={this.state.mapType == "hybrid" ? { backgroundColor: "#ffefd5" } : {}}
                     title="Địa hình"
                     onPress={() => {
                       this.setState({
@@ -875,10 +933,10 @@ export default class MapPage extends Component {
                       this.refs.drawer.closeDrawer();
                     }} />
                   <ListItem
-                    titleStyle={this.state.mapType == "terrain" ? { fontSize: 20, fontFamily: 'fantasy', fontWeight: 'bold' } :
-                                                                  { fontSize: 20, fontFamily: 'fantasy' }}
+                    titleStyle={this.state.mapType == "terrain" ? { fontSize: 20, fontFamily: 'sans-serif', fontWeight: 'bold' } :
+                      { fontSize: 20, fontFamily: 'sans-serif' }}
                     underlayColor="#ffefd5"
-                    containerStyle={this.state.mapType == "terrain" ? { backgroundColor: "#ffefd5" } : {}}    
+                    containerStyle={this.state.mapType == "terrain" ? { backgroundColor: "#ffefd5" } : {}}
                     title="Hỗn hợp"
                     onPress={() => {
                       this.setState({
@@ -905,12 +963,13 @@ export default class MapPage extends Component {
                       return (
                         <ListItem
                           titleStyle={this.state.groupID == u._id ? { fontSize: 20, fontFamily: 'fantasy', fontWeight: 'bold' } :
-                                                                      { fontSize: 20, fontFamily: 'fantasy' }}
+                            { fontSize: 20, fontFamily: 'fantasy' }}
                           underlayColor="#ffefd5"
                           containerStyle={this.state.groupID == u._id ? { backgroundColor: "#ffefd5" } : {}}
                           key={i}
                           title={u.name}
                           onPress={() => {
+                            this.state.groupName = u.name;
                             this.state.groupID = u._id;
                             this.startNewSocket(this.state.groupID);
                             this.refs.drawer.closeDrawer();
@@ -921,163 +980,267 @@ export default class MapPage extends Component {
                 </Card>
               </View>
             </ScrollView>
-
-
           }>
-          <MapView
-            ref="map"
-            style={{ flex: 1 }}
-            toolbarEnabled={false}
-            onRegionChange={this.onRegionChange}
-            mapType={this.state.mapType}
-            customMapStyle={customStyle}
-            onPress={this.onMapPress}>
-            {this.state.markers.map(marker => (
-              <MapView.Marker
-                title={marker.key}
-                key={marker.key}
-                coordinate={marker.coordinate}
-                pinColor='sandybrown'
-              />
-            ))}
-            {this.state.members.map(user => {
-              if (user._id != this.props.userInfo.user_id) return (
-                <MapView.Marker
-                  title={user._id}
-                  key={user._id}
-                  coordinate={user.coordinate}>
-                  <View>
-                    <Image
-                      source={require("../assets/map/map_user_marker.png")}
-                      style={{ height: 48, width: 48 }}
+          <View style={{ flex: 1 }}>
+           
+            <ScrollView style={{ flex:1, backgroundColor:'silver' }}>
+              <View>
+                <MapView
+                  ref="map"
+                  style={{ height: height / 2, }}
+                  toolbarEnabled={false}
+                  onRegionChange={this.onRegionChange}
+                  mapType={this.state.mapType}
+                  onPress={this.onMapPress}>
+                  {this.state.markers.map(marker => (
+                    <MapView.Marker
+                      title={marker.key}
+                      key={marker.key}
+                      coordinate={marker.coordinate}
+                      pinColor='sandybrown'
                     />
-                  </View>
-                </MapView.Marker>
-              )
-            })}
-            {this.state.currentRegion !== null ? (
-              <MapView.Marker
-                title='Vị trí của bạn'
-                key={0}
-                coordinate={this.state.currentRegion}
-              >
-                <View>
-                  <Image
-                    source={require("../assets/map/map_user_marker.png")}
-                    style={{ height: 48, width: 48 }}
-                  />
-                </View>
+                  ))}
+                  {this.state.members.map(user => {
+                    if (user._id != this.props.userInfo.user_id) return (
+                      <MapView.Marker
+                        title={user._id}
+                        key={user._id}
+                        coordinate={user.coordinate}>
+                        <View>
+                          <Image
+                            source={require("../assets/map/map_user_marker.png")}
+                            style={{ height: 48, width: 48 }}
+                          />
+                        </View>
+                      </MapView.Marker>
+                    )
+                  })}
+                  {this.state.currentRegion !== null ? (
+                    <MapView.Marker
+                      title='Vị trí của bạn'
+                      key={0}
+                      coordinate={this.state.currentRegion}
+                    >
+                      <View>
+                        <Image
+                          source={require("../assets/map/map_user_marker.png")}
+                          style={{ height: 48, width: 48}}
+                        >
+                        <Image
+                          style={{ width: 30, height: 30, alignSelf: "center", borderRadius:30 / 2 }}
+                          resizeMode="cover"
 
-              </MapView.Marker>
-            ) : <View />}
+                          source={{ uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7" }}
+                        />
+                        </Image>
+                      </View>
 
-            {this.state.start_location !== null ?
-              <MapView.Marker
-                title='Điểm bắt đầu'
-                key={1}
-                coordinate={this.state.start_location}>
-                <View>
-                  <Image
-                    source={require("../assets/map/map_startlocation_marker.png")}
-                    style={{ height: 48, width: 48 }}
-                  />
-                </View>
-                <MapView.Callout
-                  style={{ width: 150 }}
-                  tooltip={true}
-                  onPress={() => { this.findDirection(this.state.currentRegion, this.state.start_location) }}>
-                  <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 150 / 2 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm bắt đầu</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontStyle: 'italic', fontSize: 10 }}>Chạm vào để tìm đường đi</Text>
-                    </View>
-                  </View>
-                </MapView.Callout>
-              </MapView.Marker>
-              : <View />}
-            {this.state.start_location !== null ?
-              <MapView.Circle
-                center={this.state.start_location}
-                radius={100}
-                strokeWidth={1}
-              />
-              : <View />}
-            {this.state.end_location !== null ?
-              <MapView.Marker
-                title='Điểm kết thúc'
-                key={2}
-                coordinate={this.state.end_location}>
-                <View>
-                  <Image
-                    source={require("../assets/map/map_endlocation_marker.png")}
-                    style={{ height: 48, width: 48 }}
-                  />
-                </View>
-                <MapView.Callout
-                  style={{ width: 150 }}
-                  tooltip={true}
-                  onPress={() => { this.findDirection(this.state.currentRegion, this.state.end_location) }}>
-                  <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 150 / 2 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm kết thúc</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontStyle: 'italic', fontSize: 10 }}>Chạm vào để tìm đường đi</Text>
-                    </View>
-                  </View>
-                </MapView.Callout>
-              </MapView.Marker>
-              : <View />}
-            {this.state.end_location !== null ?
-              <MapView.Circle
-                center={this.state.end_location}
-                radius={100}
-                strokeWidth={1}
-              />
-              : <View />}
-            {this.state.stopovers.map(u => {
-              return (
-                <MapView.Marker
-                  title='Điểm dừng chân'
-                  key={id++}
-                  coordinate={u.coordinate}>
-                  <View>
-                    <Image
-                      source={require("../assets/map/map_stopover_marker.png")}
-                      style={{ height: 48, width: 48 }}
+                    </MapView.Marker>
+                  ) : <View />}
+
+                  {this.state.start_location !== null ?
+                    <MapView.Marker
+                      title='Điểm bắt đầu'
+                      key={1}
+                      coordinate={this.state.start_location}>
+                      <View>
+                        <Image
+                          source={require("../assets/map/map_startlocation_marker.png")}
+                          style={{ height: 48, width: 48 }}
+                        />
+                      </View>
+                      <MapView.Callout
+                        style={{ width: 150, }}
+                        tooltip={true}
+                        onPress={() => { this.findDirection(this.state.currentRegion, this.state.start_location) }}>
+                        <View style={{ flexDirection: 'column', padding: 10, alignItems: 'center', backgroundColor: 'orange', borderRadius: 10 }}>
+                          <View style={{}}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm bắt đầu</Text>
+                          </View>
+                          <View>
+                            <Text style={{ fontSize: 15, margin: 5 }}>{this.state.start_address}</Text>
+                          </View>
+                          <View style={{}}>
+                            <Text style={{ fontStyle: 'italic', fontSize: 10 }}>Chạm vào để tìm đường đi</Text>
+                          </View>
+                        </View>
+                      </MapView.Callout>
+                    </MapView.Marker>
+                    : <View />}
+                  {this.state.start_location !== null ?
+                    <MapView.Circle
+                      center={this.state.start_location}
+                      radius={100}
+                      strokeWidth={1}
                     />
+                    : <View />}
+                  {this.state.end_location !== null ?
+                    <MapView.Marker
+                      title='Điểm kết thúc'
+                      key={2}
+                      coordinate={this.state.end_location}>
+                      <View>
+                        <Image
+                          source={require("../assets/map/map_endlocation_marker.png")}
+                          style={{ height: 48, width: 48 }}
+                        />
+                      </View>
+                      <MapView.Callout
+                        style={{ width: 150 }}
+                        tooltip={true}
+                        onPress={() => { this.findDirection(this.state.currentRegion, this.state.end_location) }}>
+                        <View style={{ flexDirection: 'column', padding: 10, alignItems: 'center', backgroundColor: 'orange', borderRadius: 10 }}>
+                          <View style={{}}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm kết thúc</Text>
+                          </View>
+                          <View>
+                            <Text style={{ fontSize: 15, margin: 5 }}>{this.state.end_address}</Text>
+                          </View>
+                          <View style={{}}>
+                            <Text style={{ fontStyle: 'italic', fontSize: 10 }}>Chạm vào để tìm đường đi</Text>
+                          </View>
+                        </View>
+                      </MapView.Callout>
+                    </MapView.Marker>
+                    : <View />}
+                  {this.state.end_location !== null ?
+                    <MapView.Circle
+                      center={this.state.end_location}
+                      radius={100}
+                      strokeWidth={1}
+                    />
+                    : <View />}
+                  {this.state.stopovers.map(u => {
+                    return (
+                      <MapView.Marker
+                        title='Điểm dừng chân'
+                        key={id++}
+                        coordinate={u.coordinate}>
+                        <View>
+                          <Image
+                            source={require("../assets/map/map_stopover_marker.png")}
+                            style={{ height: 48, width: 48 }}
+                          />
+                        </View>
+                        <MapView.Callout
+                          style={{ width: 150 }}
+                          tooltip={true}
+                          onPress={() => { this.findDirection(this.state.currentRegion, u.coordinate) }}>
+                          <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 150 / 2 }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm dừng chân</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontStyle: 'italic', fontSize: 10 }}>Chạm vào để tìm đường đi</Text>
+                            </View>
+                          </View>
+                        </MapView.Callout>
+                      </MapView.Marker>)
+                  })}
+                  {this.state.appointments.map((u, i) => {
+                    return (
+                      <MapView.Marker
+                        title='Điểm hẹn'
+                        key={id++}
+                        coordinate={u.coordinate}
+
+                      >
+                      </MapView.Marker>)
+                  })}
+                  <MapView.Polyline
+                    coordinates={this.state.direction_coordinates}
+                    strokeWidth={5}
+                  />
+
+
+                </MapView>
+                <View style={{ margin: 10, ...StyleSheet.absoluteFillObject }}>
+                  <View style={{ alignContent: 'center', alignSelf: 'flex-end', padding: 5, backgroundColor: "white", borderRadius: 10 }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (this.state.currentRegion !== null) {
+                          this.refs.map.animateToRegion(this.state.currentRegion, 2000);
+                        }
+                      }}>
+                      <Image
+                        source={require("../assets/map/navbar_gps_icon.png")}
+                        style={{ height: 30, width: 30 }} />
+                    </TouchableOpacity>
                   </View>
-                  <MapView.Callout
-                    style={{ width: 150 }}
-                    tooltip={true}
-                    onPress={() => { this.findDirection(this.state.currentRegion, u.coordinate) }}>
-                    <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 150 / 2 }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm dừng chân</Text>
+                </View>
+              </View>
+              <View style={{margin:1, backgroundColor:'white'}}>
+                <Text style={{ fontFamily: 'sans-serif', fontSize: 25 }}>Danh sách điểm hẹn</Text>
+                <ListView
+                  horizontal={true}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  scrollEnabled={true}
+                  style={{}}
+                  dataSource={this.state.dataRoutesSource}
+                  renderRow={(data) =>
+                    <View style={{ flexDirection: 'column', alignItems: 'center', margin: 5 }}>
+                      <View style={{ width: 150, height: 150, borderRadius: 150 / 2, margin: 10 }}>
+                        <MapView
+                          liteMode={true}
+                          mapType={this.state.mapType}
+                          style={{ ...StyleSheet.absoluteFillObject }}
+                          region={{
+                            latitude: data.coordinate.latitude,
+                            longitude: data.coordinate.longitude,
+                            latitudeDelta: LATITUDE_DELTA,
+                            longitudeDelta: LONGITUDE_DELTA,
+                          /*{
+                          latitude: (this.state.start_location.latitude + this.state.end_location.latitude) / 2,
+                          longitude: (this.state.start_location.longitude + this.state.end_location.longitude) / 2,
+                          latitudeDelta: Math.abs(this.state.start_location.latitude - this.state.end_location.latitude) * 1.5,
+                          longitudeDelta: Math.abs(this.state.start_location.longitude - this.state.end_location.longitude) * 1.5,
+                        }*/}} >
+                          <MapView.Marker title='Vị trí'
+                            key={data._id}
+                            coordinate={data.coordinate}/>
+                        </MapView>
                       </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontStyle: 'italic', fontSize: 10 }}>Chạm vào để tìm đường đi</Text>
-                      </View>
-                    </View>
-                  </MapView.Callout>
-                </MapView.Marker>)
-            })}
-            <MapView.Polyline
-              coordinates={this.state.direction_coordinates}
-              strokeWidth={5}
-            />
-
-
-          </MapView>
+                      
+                      <Text style={{ fontSize: 20 }}>{data.name}</Text>
+                    </View>}
+                />
+              </View>
+              <View style={{margin: 1, backgroundColor:'white'}}>
+                <Text style={{ fontFamily: 'sans-serif', fontSize: 25 }}>Danh sách thành viên</Text>
+                <ListView
+                  horizontal={true}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  scrollEnabled={true}
+                  style={{}}
+                  dataSource={this.state.dataMembersSource}
+                  renderRow={(data) =>
+                    <View style={{ flexDirection: 'column', alignItems: 'center', margin: 5 }}>
+                      <Image
+                        style={{ width: 70, height: 70, alignSelf: "center", borderRadius: 70 / 2 }}
+                        resizeMode="cover"
+                        source={{ uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7" }}
+                      />
+                      <Text style={{ fontSize: 20 }}>{data.username}</Text>
+                      
+                    </View>}
+                    
+                />
+                <TouchableOpacity>
+                <Text style={{marginLeft: 20, fontFamily:'sans-serif', fontSize: 25, color:'blue'}}>+Thêm thành viên mới</Text>
+                </TouchableOpacity>
+              </View>
+              
+            </ScrollView>
+          </View>
         </DrawerLayoutAndroid>
 
-        <ActionButton buttonColor="rgba(231,76,60,1)">
+        {/*<ActionButton buttonColor="rgba(231,76,60,1)">
           <ActionButton.Item buttonColor='#9b59b6' title="Tìm đường" onPress={this.findRouteDirection}>
             <Icon name="md-create" style={styles.actionButtonIcon} />
           </ActionButton.Item>
-        </ActionButton>
+        </ActionButton>*/}
       </View>
     );
   }

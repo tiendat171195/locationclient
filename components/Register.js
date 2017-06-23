@@ -97,12 +97,12 @@ export default class Register extends Component{
                 >
             <ScrollView>
                         
-                <View style={{margin: 20}}>
+                <View style={{alignItems:'center', margin:20}}>
                             
                             <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
                                 <Text style={{ fontFamily: 'sans-serif', fontSize: 35, fontWeight: 'bold', color: 'white' }}>Đăng ký</Text>
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, borderTopRightRadius: 15, borderTopLeftRadius: 15, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -121,7 +121,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -141,7 +141,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -160,7 +160,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -180,7 +180,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -202,7 +202,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -223,7 +223,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image
@@ -244,7 +244,7 @@ export default class Register extends Component{
                                     placeholderTextColor="white"
                                     underlineColorAndroid='white' />
                             </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, width: width - 100,  flexDirection: 'row', alignSelf: 'center', }}>
+                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100,  flexDirection: 'row', alignSelf: 'center', }}>
                                 <View style={{ flex: 1, opacity: 0.55, borderBottomLeftRadius: 15, borderBottomRightRadius: 15, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
 
                                 <Image

@@ -3,6 +3,7 @@ package com.locationclient;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.cmcewen.blurview.BlurViewPackage;
 import com.cboy.rn.splashscreen.SplashScreenReactPackage;
 import com.evollu.react.fcm.FIRMessagingPackage;
 import com.aakashns.reactnativedialogs.ReactNativeDialogsPackage;
@@ -28,11 +29,13 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            
             new SplashScreenReactPackage(),
             new FIRMessagingPackage(),
             new ReactNativeDialogsPackage(),
             new VectorIconsPackage(),
-            new MapsPackage()
+            new MapsPackage(),
+			new BlurViewPackage()
       );
     }
   };
