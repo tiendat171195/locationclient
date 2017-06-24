@@ -77,13 +77,13 @@ export default class MainScreen extends Component{
 	onChangeTab(index, ref){
 		switch(index){
 			case 0:
-				Actions.chatroomspage({type: ActionConst.REFRESH});
+			Actions.chatroomspage({type: ActionConst.FOCUS});
 				break;
 			case 1:
-				Actions.map({type: ActionConst.REFRESH});
+			Actions.map({type: ActionConst.FOCUS});
 				break;
 			case 2:
-				Actions.info({type: ActionConst.REFRESH});
+				Actions.info({type: ActionConst.FOCUS});
 				break;
 		}
 	}

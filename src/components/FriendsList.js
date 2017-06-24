@@ -14,7 +14,10 @@ import { Card, ListItem, Button, Icon } from 'react-native-elements';
 
 import apis from '../apis/api.js';
 	
-export default class FriendsList extends Component {
+	import { connect } from 'react-redux';
+	import { getFriends } from '../actions';
+	
+class FriendsList extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
@@ -24,9 +27,18 @@ export default class FriendsList extends Component {
 		this.onActionSelected = this.onActionSelected.bind(this);
 	}
 	componentWillMount(){
-		this.getFriendsList();
+		this.props.getFriends();
 		this.getFriendRequestList();
 
+	}
+	componentWillReceiveProps(nextProps){
+		if(nextProps.getFriendsRespose.fetched){
+			for (var i = nextProps.getFriendsRespose.data.friends.length - 1; i >= 0; i--) {
+				this.state.friends_list.push({'name': nextProps.getFriendsRespose.data.friends[i].username, 
+																			'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
+			};
+		}
+		
 	}
 	showAddFriendDialog = function () {
 	    var dialog = new DialogAndroid();
@@ -48,10 +60,7 @@ export default class FriendsList extends Component {
   	}
   	async getFriendsList(){
   		let responseAPI = await apis.getFriendsList();
-			for (var i = responseAPI.friends.length - 1; i >= 0; i--) {
-				this.state.friends_list.push({'name': responseAPI.friends[i].username, 
-																			'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
-			};
+			
 			this.forceUpdate();
   	}
   	async getFriendRequestList(){
@@ -168,3 +177,21 @@ export default class FriendsList extends Component {
 
 
 }
+
+
+function mapStateToProps(state) {
+    return {
+			getFriendsRespose: state.getFriendsRespose
+    }
+}
+
+function mapDispatchToProps(dispatch) {
+    return {
+        getFriends: () => dispatch(getFriends())
+    }
+}
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(FriendsList);

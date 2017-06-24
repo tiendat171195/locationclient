@@ -64,7 +64,6 @@ export default class CreateRoom extends Component {
                         placeholder="Mô tả"
                     />
                     <Text>Thêm thành viên</Text>
-                    
                     <Button
                         onPress={() => { this.CreateNewRoom(this.state.newRoomName) }}
                         title="Tạo"
