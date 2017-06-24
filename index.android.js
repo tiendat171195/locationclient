@@ -5,7 +5,11 @@ import {
   Alert,
   AsyncStorage
 } from 'react-native';
+import App from './src/app.js';
+/* import { Provider } from 'react-redux';
 import { Scene, Router, Actions } from 'react-native-router-flux';
+
+
 
 //Import screens
 import Register from "./components/Register.js";
@@ -20,21 +24,26 @@ import RoomSetting from './components/RoomSetting.js';
 import FriendsList from './components/FriendsList.js';
 
 import apis from './apis/api.js';
-import SplashScreen from 'react-native-splash-screen';
+import SplashScreen from 'react-native-splash-screen'; */
 
 export default class LocationClient extends Component {
-  constructor(props) {
+  render(){
+    return(
+      <App />
+    );
+  }
+  /* constructor(props) {
     super(props);
     this.state = {
       logged: false
     }
   }
-  componentWillMount(){
-      this.checkLoggedIn();
-    
+  componentWillMount() {
+    this.checkLoggedIn();
+
   }
-  componentDidMount(){
-    
+  componentDidMount() {
+
   }
   async SignIn(Username, Password) {
     let responseAPI = await apis.SignIn(Username, Password);
@@ -57,7 +66,7 @@ export default class LocationClient extends Component {
         console.error(error);
       }
       apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
-      setTimeout(()=>{
+      setTimeout(() => {
         SplashScreen.hide();
       }, 500);
       Actions.mainscreen({
@@ -67,7 +76,7 @@ export default class LocationClient extends Component {
           'username': responseAPI.username
         }
       });
-      
+
     }
     else {
       SplashScreen.hide();
@@ -87,7 +96,7 @@ export default class LocationClient extends Component {
           await this.SignIn(userInfo.username, userInfo.password);
         }
       }
-      else{
+      else {
         SplashScreen.hide();
       }
     } catch (error) {
@@ -96,24 +105,24 @@ export default class LocationClient extends Component {
   }
   render() {
     return (
-      <Router
-        >
-        <Scene key="root" hideNavBar={true}>
-          <Scene key="login" component={Login} initial={!this.state.logged} />
-          <Scene key="register" component={Register} />
-          <Scene key="mainscreen" component={MainScreen} initial={this.state.logged} />
-          <Scene key="chatroomspage" component={ChatRoomsPage}/>
-          <Scene key="chatroom" component={ChatRoom} />
-          <Scene key="roomsetting" component={RoomSetting} />
-          <Scene key="createroom" component={CreateRoom} />
-          <Scene key="map" component={MapPage} />
-          <Scene key="info" component={SettingPage} />
-          <Scene key="friendslist" component={FriendsList} />
-        </Scene>
-      </Router>
-
+      <Provider store={}>
+        <Router>
+          <Scene key="root" hideNavBar={true}>
+            <Scene key="login" component={Login} initial={!this.state.logged} />
+            <Scene key="register" component={Register} />
+            <Scene key="mainscreen" component={MainScreen} initial={this.state.logged} />
+            <Scene key="chatroomspage" component={ChatRoomsPage} />
+            <Scene key="chatroom" component={ChatRoom} />
+            <Scene key="roomsetting" component={RoomSetting} />
+            <Scene key="createroom" component={CreateRoom} />
+            <Scene key="map" component={MapPage} />
+            <Scene key="info" component={SettingPage} />
+            <Scene key="friendslist" component={FriendsList} />
+          </Scene>
+        </Router>
+      </Provider>
     );
-  }
+  } */
 }
 
 AppRegistry.registerComponent('LocationClient', () => LocationClient);
