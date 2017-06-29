@@ -2,8 +2,9 @@ import {
 	Alert,
 	AsyncStorage
 } from 'react-native';
-//const API_path = 'http://192.168.83.2:3000/';
-const API_path = ' https://stormy-woodland-18039.herokuapp.com/';
+import {
+	SERVER_PATH
+} from '../components/type.js';
 const googleAPI_key = "AIzaSyB2jkGH3HlHuXQ4OQx7wtp96mjjXIHC0rU";
 var token = '';
 var user_id = '';
@@ -14,7 +15,7 @@ var apis = {
 	},
 	async Subscribe(fcmToken) {
 		try {
-			let response = await fetch(API_path + 'notification/subscribe/',
+			let response = await fetch(SERVER_PATH + 'notification/subscribe/',
 				{
 					"method": "POST",
 					headers: {
@@ -36,7 +37,7 @@ var apis = {
 	},
 	async Unsubscribe(fcmToken) {
 		try {
-			let response = await fetch(API_path + 'notification/subscribe/',
+			let response = await fetch(SERVER_PATH + 'notification/subscribe/',
 				{
 					"method": "POST",
 					headers: {
@@ -59,7 +60,7 @@ var apis = {
 	async Register(username, password, phone, email, gender, birthday, city) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				let response = await fetch(API_path + 'auth/register/',
+				let response = await fetch(SERVER_PATH + 'auth/register/',
 					{
 						"method": "POST",
 						headers: {
@@ -81,13 +82,13 @@ var apis = {
 
 			}
 			catch (error) {
-				console.error(error);
+				return reject(error);
 			}
 		})
 	},
 	async SignIn(username, password) {
 		try {
-			let response = await fetch(API_path + 'auth/login/',
+			let response = await fetch(SERVER_PATH + 'auth/login/',
 				{
 					"method": "POST",
 					headers: {
@@ -104,12 +105,11 @@ var apis = {
 		}
 		catch (error) {
 			console.error(error);
-			return null;
 		}
 	},
 	async SignOut() {
 		try {
-			let response = await fetch(API_path + 'auth/logout/',
+			let response = await fetch(SERVER_PATH + 'auth/logout/',
 				{
 					method: "GET",
 					headers: {
@@ -123,15 +123,39 @@ var apis = {
 			return responseJson;
 		}
 		catch (error) {
-			console.error(error);
-			return null;
+			return console.error(error);
 		}
 	},
+	async searchFriend(keyword) { 
+		
+				return new Promise(async (resolve, reject) => {
+					try {
+						let response = await fetch(SERVER_PATH + 'search/friends?keyword='+keyword,
+							{
+								'method': 'GET',
+								headers: {
+									'Accept': 'application/json',
+									'Content-Type': 'application/json',
+									'token': token,
+									//'user_id': user_id,
+								}
+							});
+						let responseJson = await response.json();
+						return resolve(responseJson);
+					}
+					catch (error) {
+						return reject(error);
+					}
+				})
+		
+		
+				
+			},
 	async getFriendsList() { //done redux
 
 		return new Promise(async (resolve, reject) => {
 			try {
-				let response = await fetch(API_path + 'friends/',
+				let response = await fetch(SERVER_PATH + 'friends/',
 					{
 						'method': 'GET',
 						headers: {
@@ -145,8 +169,7 @@ var apis = {
 				return resolve(responseJson);
 			}
 			catch (error) {
-				console.error(error);
-				return null;
+				return reject(error);
 			}
 		})
 
@@ -155,7 +178,7 @@ var apis = {
 	},
 	async getFriendsRequestList() {
 		try {
-			let response = await fetch(API_path + 'friends/requests/',
+			let response = await fetch(SERVER_PATH + 'friends/requests/',
 				{
 					'method': 'GET',
 					headers: {
@@ -175,7 +198,7 @@ var apis = {
 	},
 	async addNewFriend(friendId) {
 		try {
-			let response = await fetch(API_path + 'friends/' + friendId + '/add/',
+			let response = await fetch(SERVER_PATH + 'friends/' + friendId + '/add/',
 				{
 					'method': 'POST',
 					headers: {
@@ -195,7 +218,7 @@ var apis = {
 	},
 	async acceptFriend(friendId) {
 		try {
-			let response = await fetch(API_path + 'friends/' + friendId + '/accept/',
+			let response = await fetch(SERVER_PATH + 'friends/' + friendId + '/accept/',
 				{
 					'method': 'POST',
 					headers: {
@@ -215,7 +238,7 @@ var apis = {
 	},
 	async deleteFriendRequest(friendId) {
 		try {
-			let response = await fetch(API_path + 'friends/' + friendId + '/delete/',
+			let response = await fetch(SERVER_PATH + 'friends/' + friendId + '/delete/',
 				{
 					'method': 'POST',
 					headers: {
@@ -235,7 +258,7 @@ var apis = {
 	},
 	async createNewRoom(RoomName) {
 		try {
-			let response = await fetch(API_path + 'groups/',
+			let response = await fetch(SERVER_PATH + 'groups/',
 				{
 					method: "POST",
 					headers: {
@@ -259,7 +282,31 @@ var apis = {
 	async getRoomList() { //Done redux
 		return new Promise(async (resolve, reject) => {
 			try {
-				let response = await fetch(API_path + 'groups/',
+				let response = await fetch(SERVER_PATH + 'groups/',
+					{
+						method: "GET",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				console.error(error);
+				return null;
+			}
+		})
+
+		
+	},
+	async getRoomInfo(groupID) { //Done redux
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'groups/',
 					{
 						method: "GET",
 						headers: {
@@ -282,7 +329,7 @@ var apis = {
 	},
 	async addNewMember(GroupID, NewMemberID) {
 		try {
-			let response = await fetch(API_path + 'groups/' + GroupID + '/members?friend_id=' + NewMemberID,
+			let response = await fetch(SERVER_PATH + 'groups/' + GroupID + '/members?friend_id=' + NewMemberID,
 				{
 					method: "POST",
 					headers: {
@@ -306,12 +353,12 @@ var apis = {
 	},
 	async findDirection_googleAPI(origin, destination, waypoints = []) {
 		try {
-			const directionAPI_path = "https://maps.googleapis.com/maps/api/directions/json?";
-			console.log(directionAPI_path +
+			const directionSERVER_PATH = "https://maps.googleapis.com/maps/api/directions/json?";
+			console.log(directionSERVER_PATH +
 				"origin=" + origin.latitude + ',' + origin.longitude +
 				"&destination=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
-			let response = await fetch(directionAPI_path +
+			let response = await fetch(directionSERVER_PATH +
 				"origin=" + origin.latitude + ',' + origin.longitude +
 				"&destination=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
@@ -324,12 +371,12 @@ var apis = {
 	},
 	async distance_googleAPI(origin, destination) {
 		try {
-			const distanceAPI_path = "https://maps.googleapis.com/maps/api/distancematrix/json?";
-			console.log(distanceAPI_path +
+			const distanceSERVER_PATH = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+			console.log(distanceSERVER_PATH +
 				"origins=" + origin.latitude + ',' + origin.longitude +
 				"&destinations=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
-			let response = await fetch(distanceAPI_path +
+			let response = await fetch(distanceSERVER_PATH +
 				"origins=" + origin.latitude + ',' + origin.longitude +
 				"&destinations=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
@@ -345,12 +392,12 @@ var apis = {
 	},
 	async distanceMatrix_googleAPI(origin, destination) {
 		try {
-			const distanceAPI_path = "https://maps.googleapis.com/maps/api/distancematrix/json?";
-			console.log(distanceAPI_path +
+			const distanceSERVER_PATH = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+			console.log(distanceSERVER_PATH +
 				"origins=" + origin.latitude + ',' + origin.longitude +
 				"&destinations=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
-			let response = await fetch(distanceAPI_path +
+			let response = await fetch(distanceSERVER_PATH +
 				"origins=" + origin.latitude + ',' + origin.longitude +
 				"&destinations=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
@@ -366,14 +413,14 @@ var apis = {
 	},
 	async getInfoLocation_googleAPI(location) {
 		try {
-			const geocodingAPI_path = 'https://maps.googleapis.com/maps/api/geocode/json?';
+			const geocodingSERVER_PATH = 'https://maps.googleapis.com/maps/api/geocode/json?';
 			var address;
 			if (typeof location === "object" && typeof location !== null) {
 				address = '' + location.latitude + ',' + location.longitude;
 			} else if (typeof location === 'string') {
 				address = encodeURIComponent(location);
 			}
-			let response = await fetch(geocodingAPI_path +
+			let response = await fetch(geocodingSERVER_PATH +
 				'address=' + address +
 				'&key=' + googleAPI_key);
 			let responseJson = response.json();

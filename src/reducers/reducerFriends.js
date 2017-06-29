@@ -13,7 +13,8 @@ export default function dataReducer(state = initialState, action) {
             return {
                 ...state,
                 data:{},
-                isFetching: true
+                isFetching: true,
+                fetched: false
             }
             case FETCHING_FRIENDS_SUCCESS:
             return {
@@ -26,6 +27,7 @@ export default function dataReducer(state = initialState, action) {
             return {
                 ...state,
                 isFetching: false,
+                fetched:false,
                 error: true
             }
         default:

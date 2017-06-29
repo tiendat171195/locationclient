@@ -13,6 +13,7 @@ export default function dataReducer(state = initialState, action) {
             return {
                 ...state,
                 data:{},
+                fetched:false,
                 isFetching: true
             }
             case FETCHING_ROOMS_SUCCESS:
@@ -26,6 +27,7 @@ export default function dataReducer(state = initialState, action) {
             return {
                 ...state,
                 isFetching: false,
+                fetched:false,
                 error: true
             }
         default:

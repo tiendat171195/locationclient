@@ -15,8 +15,9 @@ import io from 'socket.io-client/dist/socket.io.js';
 import DialogAndroid from 'react-native-dialogs';
 import apis from '../apis/api.js';
 import RoomSetting from './RoomSetting.js';
-//const API_path = 'http://192.168.83.2:3000/';
-const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
+import {
+	SERVER_PATH
+} from './type.js';
 var myThis;
 let id = 99999999;
 export default class ChatRoom extends Component {
@@ -34,15 +35,16 @@ export default class ChatRoom extends Component {
 		this.getSocketData = this.getSocketData.bind(this);
 	}
 	getSocketData() {
+		console.log('getSocketData');
 		this.socket.emit('get_messages', JSON.stringify({
 			'user_id': this.props.userInfo.user_id,
-			'group_id': this.props.groupInfo.group_id
+			'group_id': this.props.groupInfo._id
 		}));
 	}
 	addSocketCallback() {
 		this.socket.on('add_message_callback', function (data) {
 			console.log('add_message_callback');
-			if (data.chatter._id != myThis.props.userInfo.user_id && data.group._id == myThis.props.groupInfo.group_id) {
+			if (data.chatter._id != myThis.props.userInfo.user_id && data.group._id == myThis.props.groupInfo._id) {
 				myThis.setState((previousState) => {
 					return {
 						messages: GiftedChat.append(previousState.messages, [{
@@ -62,7 +64,7 @@ export default class ChatRoom extends Component {
 
 		this.socket.on('get_messages_callback', function (data) {
 			console.log('get_messages_callback');
-			if (myThis.props.groupInfo.group_id != data.group_id) return;
+			if (myThis.props.groupInfo._id != data.group_id) return;
 			for (var index = 0; index < data.messages.length; index++) {
 				myThis.setState((previousState) => {
 					return {
@@ -82,11 +84,13 @@ export default class ChatRoom extends Component {
 		});
 	}
 	startSocket() {
-		this.socket = io(API_path + 'chats?group_id=' + this.props.groupInfo.group_id, { jsonp: false });
-		this.socket.emit('authenticate', { "token": this.props.userInfo.token });
+		console.log(SERVER_PATH + 'chats?group_id=' + this.props.groupInfo._id + '/');
+		this.socket = io(SERVER_PATH + 'chats?group_id=' + this.props.groupInfo._id + '/', { jsonp: false });
+		this.socket.emit('authenticate', { "token": this.props.userInfo.user_token });
 		this.socket.on('authenticated', function () {
 			myThis.addSocketCallback();
 			myThis.getSocketData();
+			console.log('authenticated');
 		});
 		this.socket.on('unauthorized', function (msg) {
 			console.log("unauthorized: " + JSON.stringify(msg.data));
@@ -94,12 +98,17 @@ export default class ChatRoom extends Component {
 
 	}
 	componentWillMount() {
+		console.log('this.props.userInfo.user_token');
+		
+		console.log(this.props.userInfo.user_token);
+		console.log('this.props.groupInfo.group_id');
+		console.log(this.props.groupInfo._id);
 		this.startSocket();
 	}
 	onSend(messages = []) {
 		this.socket.emit("add_message", JSON.stringify({
 			'user_id': this.props.userInfo.user_id,
-			"group_id": this.props.groupInfo.group_id,
+			"group_id": this.props.groupInfo._id,
 			"content": messages[0].text
 		}));
 		this.setState((previousState) => {
@@ -134,17 +143,20 @@ export default class ChatRoom extends Component {
 	onActionSelected(position) {
 
 		switch (position) {
+			
 			case 0:
-				this.showAddMemberDialog(this.props.groupInfo.group_id);
-				break;
-			case 1:
-				Actions.roomsetting({ "userInfo": this.props.userInfo, "groupInfo": this.props.groupInfo });
+				Actions.roomsetting({ "userInfo": this.props.userInfo, 
+				"groupInfo": this.props.groupInfo,
+				'currentRegion': this.props.currentRegion });
 				break;
 			default:
 				break;
 		}
 	}
-
+	componentWillReceiveProps(nextProps) {
+		console.log('chat room received props');
+		console.log(nextProps.currentRegion);
+	}
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
@@ -152,11 +164,7 @@ export default class ChatRoom extends Component {
 					style={{ height: 50, backgroundColor: 'sandybrown' }}
 					navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
 					title={this.props.groupInfo.name}
-					actions={[{
-						title: 'Thêm người',
-						icon: { uri: "https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-add-128.png" },
-						show: 'always'
-					},
+					actions={[
 					{
 						title: 'Thiết lập',
 						icon: { uri: "http://quran.ksu.edu.sa/images/resize3.png" },

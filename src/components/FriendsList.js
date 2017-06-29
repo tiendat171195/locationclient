@@ -4,174 +4,212 @@ import {
 	ScrollView,
 	View,
 	Text,
-	TouchableHighlight,
+	TouchableOpacity,
 	Alert,
-	ToolbarAndroid
+	ToolbarAndroid,
+	RefreshControl,
+	Image
 } from 'react-native';
-import {Actions} from "react-native-router-flux";
+import { Actions } from "react-native-router-flux";
 import DialogAndroid from 'react-native-dialogs';
-import { Card, ListItem, Button, Icon } from 'react-native-elements';
+import ActionButton from 'react-native-action-button';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { Card, ListItem } from 'react-native-elements';
 
 import apis from '../apis/api.js';
-	
-	import { connect } from 'react-redux';
-	import { getFriends } from '../actions';
-	
+
+import { connect } from 'react-redux';
+import { getFriends } from '../actions';
+import {
+	DEFAULT_AVATAR,
+	CHATBOX,
+} from './images.js';
 class FriendsList extends Component {
-	constructor(props){
+	constructor(props) {
 		super(props);
 		this.state = {
 			friends_list: [],
 			friends_request_list: [],
+			isRefreshing: false
 		}
 		this.onActionSelected = this.onActionSelected.bind(this);
 	}
-	componentWillMount(){
-		this.props.getFriends();
+	componentWillMount() {
 		this.getFriendRequestList();
 
 	}
-	componentWillReceiveProps(nextProps){
-		if(nextProps.getFriendsRespose.fetched){
-			for (var i = nextProps.getFriendsRespose.data.friends.length - 1; i >= 0; i--) {
-				this.state.friends_list.push({'name': nextProps.getFriendsRespose.data.friends[i].username, 
-																			'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
-			};
+	componentWillReceiveProps(nextProps) {
+		if (!this.props.getFriendsResponse.fetched && nextProps.getFriendsResponse.fetched) {
 		}
+	}
+	chatWithFriend(userID){
 		
 	}
 	showAddFriendDialog = function () {
-	    var dialog = new DialogAndroid();
-	    dialog.set({
-	    	
-	      title: 'Thêm bạn mới',
-	      content: 'Nhập ID của người muốn kết bạn:',
-	      positiveText: 'Gửi lời mời kết bạn',
-	      negativeText: 'Hủy',
-	      input: ({
-	      	hint: 'ID của người muốn kết bạn',
-	      	callback: 
-	      		(friendId)=>{
-	      			this.addNewFriend(friendId);
-	      		}
-	      }),
-	    });
-	    dialog.show();
-  	}
-  	async getFriendsList(){
-  		let responseAPI = await apis.getFriendsList();
-			
-			this.forceUpdate();
-  	}
-  	async getFriendRequestList(){
-  		let responseAPI = await apis.getFriendsRequestList();
-			for (var i = responseAPI.friend_requests.length - 1; i >= 0; i--) {
-				this.state.friends_request_list.push({'name': responseAPI.friend_requests[i].username, 
-																							'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'});
-			};
-			this.forceUpdate();
-  	}
-  	async addNewFriend(friendId){
-  		try{
-				let responseAPI = await apis.addNewFriend(friendId);
-				Alert.alert(
-					"Thông báo",
-					'Yêu cầu kết bạn đã được gửi đến: '+responseAPI.username);
-			} catch(error){
-				console.error(error);
-			}
-  	}
-  	async acceptFriend(friendId){
-  		try {
-				let responseAPI = await apis.acceptFriend(friendId);
-				console.log(responseAPI);
-				Alert.alert(
-					"Thông báo",
-					'Bạn và '+responseAPI.username+' đã thành bạn bè!');
-				}
-			catch(error){
-				console.error(error);
-			}
-  	}
-		onActionSelected(position) {
-			
-			switch (position) {
-				case 0:
-					this.showAddFriendDialog();
-					break;
-				case 1:
-					break;
-				default:
-					break;
-			}
-		}
-	render(){
-		return(
-			<ScrollView>
-				<ToolbarAndroid
-				style={{height:50, backgroundColor:'sandybrown'}}
-      navIcon={{uri:"http://semijb.com/iosemus/BACK.png", width:50, height:50}}
-      title="Danh sách bạn bè"
-      actions={[{title: 'Thêm người', icon: {uri:"https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-add-128.png"}, show: 'always'}]}
-      onIconClicked={()=>{Actions.pop();
-													return true }}
-			onActionSelected={this.onActionSelected} />
-				<Text>Bạn bè</Text>
-				<Card containerStyle={{margin:0, padding: 0}} >
-				  {
-				    this.state.friends_list.map((friend, i) => {
-				      return (
-				        <ListItem
-				          key={i}
-				          roundAvatar
-				          hideChevron={true}
-				          title={friend.name}
-				          avatar={{uri:friend.avatar}}
-				          onPress={()=>console.log('Clicked')} />
-				      )
-				    })
-				  }
-				</Card>
-				<Text>Yêu cầu kết bạn</Text>
-				<Card containerStyle={{margin:0, padding: 0}} >
-				  {
-				    this.state.friends_request_list.map((request, i) => {
-				      return (
-				        <ListItem
-				          key={i}
-				          roundAvatar
-				          hideChevron={true}
-				          title={request.name}
-				          avatar={{uri:request.avatar}}
-				          subtitle={
-					          <View style={{justifyContent:'flex-end', flexDirection:'row'}}>
-					          	<Icon
-					          	  containerStyle={{paddingRight:30}}
-								  name='check'
-								  color='#f50'
-								  onPress={()=>{
-								  	console.log('i=:' + i);
-								  	this.state.friends_request_list.splice(i, 1);
-								  	this.acceptFriend(request.name);
-								  	this.forceUpdate();
-								  }} />
-					            <Icon
-								  name='do-not-disturb'
-								  color='#f50'
-								  onPress={() => {
+		var dialog = new DialogAndroid();
+		dialog.set({
 
-								  	this.state.friends_request_list.splice(i, 1);
-								  	//Call remove friend request api here...
-								  	this.forceUpdate();
-								  }} />
-					          </View>
-					        }
-				           />
-				      )
-				    })
-				  }
-				</Card>
-	        </ScrollView>
+			title: 'Thêm bạn mới',
+			content: 'Nhập ID của người muốn kết bạn:',
+			positiveText: 'Gửi lời mời kết bạn',
+			negativeText: 'Hủy',
+			input: ({
+				hint: 'ID của người muốn kết bạn',
+				callback:
+				(friendId) => {
+					this.addNewFriend(friendId);
+				}
+			}),
+		});
+		dialog.show();
+	}
+	async getFriendRequestList() {
+		let responseAPI = await apis.getFriendsRequestList();
+		this.state.friends_request_list = [];
+		console.log('responseAPI.friend_requests');
+		console.log(responseAPI.friend_requests);
+		for (var i = responseAPI.friend_requests.length - 1; i >= 0; i--) {
+			this.state.friends_request_list.push({
+				"_id": responseAPI.friend_requests[i]._id,
+				'name': responseAPI.friend_requests[i].username,
+				'avatar': DEFAULT_AVATAR
+			});
+		};
+		this.forceUpdate();
+	}
+	async addNewFriend(friendId) {
+		try {
+			let responseAPI = await apis.addNewFriend(friendId);
+			Alert.alert(
+				"Thông báo",
+				'Yêu cầu kết bạn đã được gửi đến: ' + responseAPI.username);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+	async acceptFriend(friendId) {
+		try {
+			let responseAPI = await apis.acceptFriend(friendId);
+
+			Alert.alert(
+				"Thông báo",
+				'Bạn và ' + responseAPI.username + ' đã thành bạn bè!');
+		}
+		catch (error) {
+			console.error(error);
+		}
+	}
+	onActionSelected(position) {
+
+		switch (position) {
+			case 0:
+				this.showAddFriendDialog();
+				break;
+			case 1:
+				break;
+			default:
+				break;
+		}
+	}
+	_onRefresh() {
+		this.setState({ isRefreshing: true });
+		setTimeout(() => {
+			this.props.getFriends();
+			this.setState({ isRefreshing: false });
+		}, 2000);
+
+	}
+	render() {
+		return (
+			<View style={{ flex: 1 }}>
+				<ScrollView style={{ flex: 1, backgroundColor: 'white' }}
+					refreshControl={<RefreshControl
+						refreshing={this.state.isRefreshing}
+						onRefresh={this._onRefresh.bind(this)}
+						tintColor="#ff0000"
+						title="Loading..."
+						titleColor="#00ff00"
+						colors={['#ff0000', '#00ff00', '#0000ff']}
+						progressBackgroundColor="#ffff00"
+					/>}>
+					<Card containerStyle={{ margin: 0, padding: 0 }} >
+						{
+							this.props.friendsList != undefined && this.props.friendsList.map((friend, i) => {
+								return (
+									<ListItem
+										key={i}
+										roundAvatar
+										hideChevron={true}
+										title={friend.name}
+										titleStyle={{ fontSize: 25 }}
+										rightTitle={
+											<TouchableOpacity>
+											<Image
+												resizeMode='contain'
+												style={{height:40, width:40}}
+												source={CHATBOX} />
+											</TouchableOpacity>
+										}
+										avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
+										avatar={{ uri: friend.avatar }}
+										onPress={() => console.log('Clicked')} />
+								)
+							})
+						}
+					</Card>
+					{
+						this.state.friends_request_list.length > 0 &&
+						<View>
+							<View style={{paddingLeft: 10,flexDirection: 'row', alignItems:'center'}}>
+							<Image
+							style={{height:40, width:40}}
+							source={{uri:'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png'}} />
+							<Text style={{fontSize: 20, paddingLeft: 3, color:'black', fontWeight:'bold'}}>Yêu cầu kết bạn</Text>
+							</View>w
+							<Card containerStyle={{ margin: 0, padding: 0 }} >
+								{
+									this.state.friends_request_list.map((request, i) => {
+										return (
+											<ListItem
+												key={request._id}
+												roundAvatar
+												hideChevron={true}
+												title={request.name}
+												titleStyle={{ fontSize: 25 }}
+												avatar={request.avatar}
+												avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
+												rightTitle={
+													<View style={{ flexDirection: 'row' }}>
+														<TouchableOpacity onPress={() => {
+															this.state.friends_request_list.splice(i, 1);
+															this.acceptFriend(request._id);
+															this.forceUpdate();
+														}}>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, padding: 5, margin: 3, height: 35, width: 90, borderRadius: 5, color: 'white', backgroundColor: 'blue' }}>Xác nhận</Text>
+														</TouchableOpacity>
+														<TouchableOpacity onPress={() => {
+															this.state.friends_request_list.splice(i, 1);
+															//Call remove friend request api here...
+															this.forceUpdate();
+														}}>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, padding: 5, margin: 3, height: 35, width: 90, borderRadius: 5, color: 'white', backgroundColor: 'grey' }}>Từ chối</Text>
+														</TouchableOpacity>
+													</View>
+												}
+											/>
+										)
+									})
+								}
+							</Card>
+						</View>}
+				</ScrollView>
+				<ActionButton buttonColor="rgba(231,76,60,1)">
+					<ActionButton.Item buttonColor='#9b59b6' title="Thêm bạn" onPress={this.showAddFriendDialog.bind(this)}>
+						<Icon name="md-create" />
+					</ActionButton.Item>
+
+				</ActionButton>
+			</View>
 		);
 	}
 
@@ -180,18 +218,18 @@ class FriendsList extends Component {
 
 
 function mapStateToProps(state) {
-    return {
-			getFriendsRespose: state.getFriendsRespose
-    }
+	return {
+		getFriendsResponse: state.getFriendsResponse
+	}
 }
 
 function mapDispatchToProps(dispatch) {
-    return {
-        getFriends: () => dispatch(getFriends())
-    }
+	return {
+		getFriends: () => dispatch(getFriends())
+	}
 }
 
 export default connect(
-    mapStateToProps,
-    mapDispatchToProps
+	mapStateToProps,
+	mapDispatchToProps
 )(FriendsList);

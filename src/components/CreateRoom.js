@@ -5,29 +5,49 @@ import {
     View,
     Text,
     TouchableHighlight,
+    Image,
     Alert,
     TextInput,
     Button,
-    ToolbarAndroid
+    ToolbarAndroid,
+    TouchableOpacity
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 import apis from '../apis/api.js';
-import {MAIN_COLOR, MAIN_FONT} from './type.js';
+import { MAIN_COLOR, MAIN_FONT } from './type.js';
+import { Card, ListItem } from 'react-native-elements';
 export default class CreateRoom extends Component {
     constructor(props) {
         super(props);
         this.state = {
             newRoomName: '',
+            descriptionRoom: '',
+            added_list: [],
+            friends_list: []
         };
+        this.CreateNewRoom = this.CreateNewRoom.bind(this);
+        this.AddNewMember = this.AddNewMember.bind(this);
     }
+    async AddNewMember(GroupID, NewMemberID) {
+		let responseAPI = await apis.addNewMember(GroupID, NewMemberID);
+		if (responseAPI == null) {
+			return;
+		}
+	}
     async CreateNewRoom(RoomName) {
         let responseAPI = await apis.createNewRoom(RoomName);
         if (responseAPI == null) {
             return;
         }
+        
+        this.state.added_list.map(async user=>{
+            console.log(user);
+            await apis.addNewMember(responseAPI.group_id, user._id);
+        })
+        
+
         Actions.pop();
         //if(responseAPI.status == "success"){
-        console.log(responseAPI);
         //}
 		/*else{
 			Alert.alert(
@@ -36,7 +56,9 @@ export default class CreateRoom extends Component {
 			);
 		}*/
     }
-
+    componentWillMount() {
+        this.state.friends_list = this.props.friendsList;
+    }
     render() {
         return (
             <View style={{ flex: 1 }}>
@@ -44,26 +66,80 @@ export default class CreateRoom extends Component {
                     style={{ height: 50, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title='Tạo phòng'
-                    
+
                     onIconClicked={() => {
                         Actions.pop();
                         return true
-                    }}/>
+                    }} />
                 <ScrollView>
                     <TextInput
-                        style={{ fontSize: 25, fontFamily: MAIN_FONT }}
+                        style={{ fontSize: 25, fontFamily: MAIN_FONT, padding: 20, marginHorizontal: 20 }}
                         onChangeText={(text) => this.setState({ newRoomName: text })}
                         value={this.state.newRoomName}
                         placeholder="Tên phòng"
                     />
-                    <TextInput
-                        style={{ maxHeight:100, fontSize: 25, fontFamily: MAIN_FONT }}
-                        onChangeText={(text) => this.setState({ newRoomName: text })}
-                        value={this.state.newRoomName}
-                        multiline={true}
-                        placeholder="Mô tả"
-                    />
-                    <Text>Thêm thành viên</Text>
+                    <View style={{ paddingLeft: 30, flexDirection: 'row', alignItems: 'center' }}>
+                        <Image
+                            style={{ height: 40, width: 40 }}
+                            source={{ uri: 'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png' }} />
+                        <Text style={{ fontSize: 20, paddingLeft: 3, color: 'black', fontWeight: 'bold' }}>Thêm thành viên</Text>
+                    </View>
+                    <Card containerStyle={{ margin: 0, padding: 0 }} >
+                        {
+                            this.state.added_list.map((friend, i) => {
+                                return (
+                                    <ListItem
+                                        key={i}
+                                        roundAvatar
+                                        hideChevron={true}
+                                        title={friend.name}
+                                        titleStyle={{ fontSize: 25 }}
+                                        rightTitle={
+                                            <TouchableOpacity onPress={() => {
+                                                this.state.friends_list.push(friend);
+                                                this.state.added_list.splice(i, 1);
+                                                this.forceUpdate();
+                                            }}>
+                                                <Image
+                                                    style={{ height: 40, width: 40 }}
+                                                    source={{ uri: 'http://www.iconsplace.com/download/red-minus-2-256.png' }} />
+                                            </TouchableOpacity>
+                                        }
+                                        avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
+                                        avatar={{ uri: friend.avatar }}
+                                        onPress={() => console.log('Clicked')} />
+                                )
+                            })
+                        }
+                    </Card>
+                    <Card containerStyle={{ margin: 0, padding: 0 }} >
+                        {
+                            this.state.friends_list.map((friend, i) => {
+                                return (
+                                    <ListItem
+                                        key={i}
+                                        roundAvatar
+                                        hideChevron={true}
+                                        title={friend.name}
+                                        titleStyle={{ fontSize: 25 }}
+                                        rightTitle={
+                                            <TouchableOpacity onPress={() => {
+                                                this.state.added_list.push(friend);
+                                                this.state.friends_list.splice(i, 1);
+                                                this.forceUpdate();
+                                            }}>
+                                                <Image
+                                                    style={{ height: 40, width: 40 }}
+                                                    source={{ uri: 'https://cdn.pixabay.com/photo/2014/04/02/10/55/plus-304947_640.png' }} />
+                                            </TouchableOpacity>
+                                        }
+                                        avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
+                                        avatar={{ uri: friend.avatar }}
+                                        onPress={() => console.log('Clicked')} />
+                                )
+                            })
+                        }
+                    </Card>
                     <Button
                         onPress={() => { this.CreateNewRoom(this.state.newRoomName) }}
                         title="Tạo"

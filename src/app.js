@@ -23,7 +23,8 @@ import ChatRoom from './components/ChatRoom';
 import CreateRoom from './components/CreateRoom'
 import RoomSetting from './components/RoomSetting.js';
 import FriendsList from './components/FriendsList.js';
-
+import NewAppointment from './components/NewAppointment.js';
+import NewRoute from './components/NewRoute.js';
 import apis from './apis/api.js';
 import SplashScreen from 'react-native-splash-screen';
 
@@ -65,11 +66,7 @@ export default class App extends Component {
         SplashScreen.hide();
       }, 500);
       Actions.mainscreen({
-        'userInfo': {
-          'token': responseAPI.user_token,
-          'user_id': responseAPI.user_id,
-          'username': responseAPI.username
-        }
+        'userInfo': responseAPI
       });
       
     }
@@ -109,6 +106,8 @@ export default class App extends Component {
             <Scene key="chatroomspage" component={ChatRoomsPage} />
             <Scene key="chatroom" component={ChatRoom} />
             <Scene key="roomsetting" component={RoomSetting} />
+            <Scene key='newappointment' component={NewAppointment} />
+            <Scene key='newroute' component={NewRoute} />
             <Scene key="createroom" component={CreateRoom} />
             <Scene key="map" component={MapPage} />
             <Scene key="info" component={SettingPage} />

@@ -13,6 +13,7 @@ export default function dataReducer(state = initialState, action) {
             return {
                 ...state,
                 data:{},
+                registered: false,
                 isRegistering: true
             }
             case REGISTER_SUCCESS:
@@ -26,6 +27,7 @@ export default function dataReducer(state = initialState, action) {
             return {
                 ...state,
                 isRegistering: false,
+                registered: false,
                 error: true
             }
         default:

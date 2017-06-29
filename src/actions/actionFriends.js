@@ -15,7 +15,7 @@ export function getFriendsSuccess(data) {
 
 export function getFriendsFailure() {
     return {
-        type: FETCHING_Friends_FAILURE
+        type: FETCHING_FRIENDS_FAILURE
     }
 }
 

@@ -10,12 +10,33 @@ import {
     TextInput,
     Button,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    DatePickerAndroid,
+    TouchableOpacity,
+    Picker
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 import { connect } from 'react-redux';
 import { register } from '../actions';
-
+import {
+    MAIN_COLOR,
+    CONTENT_COLOR,
+    MAIN_TEXT_COLOR,
+    CONTENT_TEXT_COLOR,
+    PLACEHOLDER_TEXT_COLOR,
+    MAIN_FONT
+} from './type.js';
+import {
+    DIENTHOAI_IMG,
+    DIACHI_IMG,
+    CHATROOM_IMG,
+    EMAIL_IMG,
+    GIOITINH_IMG,
+    NGAYSINH_IMG,
+    TENDANGNHAP_IMG,
+    MATKHAU_IMG,
+} from './images.js';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 
@@ -28,20 +49,61 @@ class Register extends Component {
             repassword: '',
             phone: null,
             email: '',
-            gender: '',
+            gender: 'Nam',
             birthday: null,
             city: '',
+            birthday_text: ''
         }
         this.checkUserInput = this.checkUserInput.bind(this);
+    }
+    async showDatePicker() {
+        try {
+            const { action, year, month, day } = await DatePickerAndroid.open({
+                // Use `new Date()` for current date.
+                // May 25 2020. Month 0 is January.
+                mode: 'spinner',
+                date: this.state.birthday == null ? new Date(Date()) : new Date(this.state.birthday)
+            });
+            if (action !== DatePickerAndroid.dismissedAction) {
+                // Selected year, month (0-11), day
+                console.log(year, month, day);
+                console.log(new Date(year, month, day).getTime());
+                this.setState({ birthday: new Date(year, month, day).getTime() });
+                this.convertBirthday();
+            }
+        } catch ({ code, message }) {
+            console.warn('Cannot open date picker', message);
+        }
+    }
+    convertBirthday() {
+        console.log(this.state.birthday);
+        let birthday = new Date(this.state.birthday);
+        console.log(birthday);
+        console.log(birthday.getDate());
+        console.log(birthday.getMonth());
+        console.log(birthday.getYear());
+        
+        this.state.birthday_text = '';
+        let tempText = '';
+        tempText =
+            + birthday.getDate()
+            + '/'
+            + (1+birthday.getMonth())
+            + '/'
+            + (1900 + birthday.getYear());
+        console.log(tempText);
+        this.setState({
+            birthday_text: tempText
+        })
     }
     checkUserInput() {
         if (this.state.username.length < 6) {
             return { status: 'error', message: 'Tên đăng nhập phải trên 6 ký tự' };
         }
-         else if (this.state.password.length < 6) {
+        else if (this.state.password.length < 6) {
             return { status: 'error', message: 'Mật khẩu phải trên 6 ký tự' };
         }
-         else if (this.state.password !== this.state.repassword) {
+        else if (this.state.password !== this.state.repassword) {
             return { status: 'error', message: 'Mật khẩu xác nhận không khớp' };
         }
         else if (this.state.phone === null) {
@@ -50,7 +112,7 @@ class Register extends Component {
         else if (this.state.email === '') {
             return { status: 'error', message: 'Email không được trống' };
         }
-        else if (this.state.birthday === '') {
+        else if (this.state.birthday === null) {
             return { status: 'error', message: 'Ngày sinh không được trống' };
         }
         else if (this.state.gender === '') {
@@ -58,7 +120,7 @@ class Register extends Component {
         }
         else if (this.state.city === '') {
             return { status: 'error', message: 'Địa chỉ không được trống' };
-        }  
+        }
         return { status: 'success' };
     }
     async SignUp() {
@@ -69,18 +131,25 @@ class Register extends Component {
                 checkInfo.message
             );
         } else {
-             this.props.register(this.state.username,
+            console.log('Dang ky ',this.state.username,
+            this.state.password,
+            this.state.phone,
+            this.state.email,
+            this.state.gender,
+            this.state.birthday,
+            this.state.city);
+            this.props.register(this.state.username,
                 this.state.password,
                 this.state.phone,
                 this.state.email,
                 this.state.gender,
                 this.state.birthday,
-                this.state.city); 
-                   
+                this.state.city);
+
         }
     }
-    componentWillReceiveProps(nextProps){
-        if(nextProps.registerResponse.registered){
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.registerResponse.registered) {
             Alert.alert(
                 'Đăng ký thành công',
                 'Chúc mừng bạn đã đăng ký thành công'
@@ -90,210 +159,304 @@ class Register extends Component {
     }
     render() {
         return (
-            <View>
-                <Image
-                    source={require('../assets/screen.jpg')}
-                    resizeMode='cover'
-                    style={{ width: width, height: height }}
-                >
-                    {
-                        this.props.registerResponse.isRegistering &&
-                        <View style={{ width: width, height: height, ...StyleSheet.absoluteFillObject }}>
-                            <ActivityIndicator size='large' />
+            <KeyboardAvoidingView>
+                {
+                    this.props.registerResponse.isRegistering &&
+                    <View style={{ width: width, height: height, ...StyleSheet.absoluteFillObject }}>
+                        <ActivityIndicator size='large' />
+                    </View>
+                }
+
+                <ScrollView style={{ backgroundColor: MAIN_COLOR }}>
+
+                    <View style={{ alignItems: 'center', margin: 20 }}>
+
+                        <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
+                            <Text style={{ fontFamily: 'sans-serif', fontSize: 35, fontWeight: 'bold', color: 'white' }}>Đăng ký</Text>
                         </View>
-                    }
 
-                    <ScrollView>
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                borderTopLeftRadius: 15,
+                                borderTopRightRadius: 15,
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
 
-                        <View style={{ alignItems: 'center', margin: 20 }}>
-
-                            <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
-                                <Text style={{ fontFamily: 'sans-serif', fontSize: 35, fontWeight: 'bold', color: 'white' }}>Đăng ký</Text>
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, borderTopRightRadius: 15, borderTopLeftRadius: 15, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/tendangnhap.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(userName) => this.setState({ username: userName })}
-                                    value={this.state.username}
-                                    placeholder="Tên đăng nhập"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(password) => this.setState({ password: password })}
-                                    value={this.state.password}
-                                    placeholder="Mật khẩu"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(repassword) => this.setState({ repassword: repassword })}
-                                    value={this.state.repassword}
-                                    placeholder="Xác nhận mật khẩu"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(phone) => this.setState({ phone: phone })}
-                                    value={this.state.phone}
-                                    placeholder="Số điện thoại"
-                                    keyboardType="phone-pad"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(email) => this.setState({ email: email })}
-                                    value={this.state.email}
-                                    keyboardType='email-address'
-                                    placeholder="E-mail"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(gender) => this.setState({ gender: gender })}
-                                    value={this.state.gender}
-                                    placeholder="Giới tính"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(birthday) => this.setState({ birthday: birthday })}
-                                    value={this.state.birthday}
-                                    placeholder="Ngày sinh"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-                            <View style={{ paddingHorizontal: 5, height: 50, minWidth: width - 100, flexDirection: 'row', alignSelf: 'center', }}>
-                                <View style={{ flex: 1, opacity: 0.55, borderBottomLeftRadius: 15, borderBottomRightRadius: 15, backgroundColor: 'darkslategrey', ...StyleSheet.absoluteFillObject }} />
-
-                                <Image
-                                    source={require('../assets/image/matkhau.png')}
-                                    resizeMode='contain'
-                                    style={{ height: 50, width: 50 }} />
-                                <TextInput
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 25,
-                                        color: "black",
-                                        fontFamily: 'sans-serif',
-                                        fontWeight: 'bold',
-                                    }}
-                                    onChangeText={(city) => this.setState({ city: city })}
-                                    value={this.state.city}
-                                    placeholder="Địa chỉ"
-                                    placeholderTextColor="white"
-                                    underlineColorAndroid='white' />
-                            </View>
-
-
+                            <Image
+                                source={TENDANGNHAP_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                onChangeText={(userName) => this.setState({ username: userName })}
+                                value={this.state.username}
+                                placeholder="Tên đăng nhập"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                underlineColorAndroid="transparent" />
                         </View>
-                        <View
-                            style={{ marginBottom: 40, borderRadius: 15, width: width - 100, alignSelf: 'center' }}>
-                            <Button
 
-                                onPress={this.SignUp.bind(this)}
-                                title="Tạo tài khoản mới"
-                                color="#841584" />
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={MATKHAU_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                onChangeText={(password) => this.setState({ password: password })}
+                                value={this.state.password}
+                                placeholder="Mật khẩu"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                secureTextEntry={true}
+                                underlineColorAndroid="transparent" />
                         </View>
-                    </ScrollView>
-                </Image>
-            </View>
+
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={MATKHAU_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                onChangeText={(repassword) => this.setState({ repassword: repassword })}
+                                value={this.state.repassword}
+                                placeholder="Xác nhận mật khẩu"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                secureTextEntry={true}
+                                underlineColorAndroid="transparent" />
+                        </View>
+
+
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={DIENTHOAI_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                onChangeText={(phone) => this.setState({ phone: phone })}
+                                value={this.state.phone}
+                                placeholder="Số điện thoại"
+                                keyboardType="phone-pad"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                underlineColorAndroid="transparent" />
+                        </View>
+
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={EMAIL_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                onChangeText={(email) => this.setState({ email: email })}
+                                value={this.state.email}
+                                keyboardType='email-address'
+                                placeholder="E-mail"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                underlineColorAndroid="transparent" />
+                        </View>
+
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={GIOITINH_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <Picker
+                                mode="dropdown"
+                                style={{flex:1, alignSelf:'flex-start'}}
+                                selectedValue={this.state.gender}
+                                onValueChange={(itemValue, itemIndex) => this.setState({ gender: itemValue })}>
+                                <Picker.Item label="Nam" value="Nam" />
+                                <Picker.Item label="Nữ" value="Nữ" />
+                            </Picker>
+                            
+                        </View>
+
+                        <TouchableOpacity onPress={this.showDatePicker.bind(this)}
+                            style={{
+                                width: width / 1.3,
+                                flexDirection: 'row',
+                                alignSelf: 'center',
+                                marginBottom: 1
+                            }}
+                            activeOpacity={1}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={NGAYSINH_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                editable={false}
+                                value={this.state.birthday_text}
+                                placeholder="Ngày sinh"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                underlineColorAndroid="transparent" />
+                        </TouchableOpacity>
+
+                        <View style={{
+                            width: width / 1.3,
+                            flexDirection: 'row',
+                            alignSelf: 'center',
+                            marginBottom: 1
+                        }}>
+                            <View style={{
+                                flex: 1,
+                                opacity: 1,
+                                backgroundColor: 'white',
+                                borderBottomLeftRadius: 15,
+                                borderBottomRightRadius: 15,
+                                ...StyleSheet.absoluteFillObject
+                            }} />
+
+                            <Image
+                                source={DIACHI_IMG}
+                                resizeMode='contain'
+                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    fontSize: 25,
+                                    color: MAIN_TEXT_COLOR,
+                                    fontFamily: MAIN_FONT,
+                                    fontWeight: 'bold',
+                                    marginTop: 6
+                                }}
+                                onChangeText={(city) => this.setState({ city: city })}
+                                value={this.state.city}
+                                placeholder="Địa chỉ"
+                                placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
+                                underlineColorAndroid="transparent" />
+                        </View>
+
+
+
+                    </View>
+                    <View
+                        style={{ alignItems: 'center', marginBottom: 50 }}>
+                        <Button
+                            onPress={this.SignUp.bind(this)}
+                            title="Tạo tài khoản mới"
+                            color="#841584" />
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         );
     }
 }

@@ -33,8 +33,6 @@ class ChatRoomsPage extends Component {
 		
 		this.state = {
 			isRefreshing: false,
-			_roomList: [],
-			friends_list: [],
 			openSearch: false,
 			dataFriendsSource: ds.cloneWithRows([]),
 		}
@@ -42,42 +40,27 @@ class ChatRoomsPage extends Component {
 
 
 	componentWillMount() {
-		this.props.getRooms();
-		this.props.getFriends();
 	}
 
 	_onRefresh() {
 		this.setState({ isRefreshing: true });
-		setTimeout(() => {
-			this.props.getRooms();
-			this.setState({ isRefreshing: false });
-		}, 2000);
-
+		this.props.getFriends();
+		this.props.getRooms();
 	}
 	componentWillReceiveProps(nextProps) {
-		if (nextProps.getRoomsResponse.fetched) {
-			this.state._roomList = [];
-			for (var index = 0; index < nextProps.getRoomsResponse.data.groups.length; index++) {
-				this.state._roomList.push(nextProps.getRoomsResponse.data.groups[index]);
-			}
-			nextProps.getRoomsResponse.fetched = false;
+		 if (!this.props.getRoomsResponse.fetched && nextProps.getRoomsResponse.fetched) {
+			
+		} 
+		if (!this.props.getFriendsResponse.fetched && nextProps.getFriendsResponse.fetched) {
+			console.log('componentWillReceiveProps chatroom');
+			console.log(nextProps);
+			this.setState({dataFriendsSource: ds.cloneWithRows(nextProps.friendsList)});
 		}
-		if (nextProps.getFriendsRespose.fetched) {
-			this.state.dataFriendsSource = [];
-			for (var i = nextProps.getFriendsRespose.data.friends.length - 1; i >= 0; i--) {
-				this.state.friends_list.push({
-					'name': nextProps.getFriendsRespose.data.friends[i].username,
-					'avatar': 'https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7'
-				});
-			};
-			this.state.dataFriendsSource = ds.cloneWithRows(this.state.friends_list);
-			nextProps.getFriendsRespose.fetched = false;
-		}
+		this.setState({ isRefreshing: false });
 	}
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
-
 				<ScrollView style={{ backgroundColor: 'white', flex: 1 }}
 					refreshControl={<RefreshControl
 						refreshing={this.state.isRefreshing}
@@ -88,7 +71,7 @@ class ChatRoomsPage extends Component {
 						colors={['#ff0000', '#00ff00', '#0000ff']}
 						progressBackgroundColor="#ffff00"
 					/>}>
-					{this.state.friends_list.length >0 &&<View style={{}}>
+					{this.props.friendsList != undefined && this.props.friendsList.length >0 &&<View style={{}}>
 <Text style={{ fontFamily: 'sans-serif', fontSize: 25 }}>Bạn bè đang trực tuyến</Text>
 <ListView
 	horizontal={true}
@@ -111,32 +94,41 @@ class ChatRoomsPage extends Component {
 					
 					<Card containerStyle={{ margin: 0, padding: 0 }} >
 						{
-							this.state._roomList.map((u, i) => {
+							this.props.roomsList != undefined && this.props.roomsList.map((u, i) => {
 								return (
 									<ListItem
 										containerStyle={{ height: 70 }}
-										title={<Text style={{ height: 35, paddingLeft: 10, fontSize: 20, fontFamily: 'sans-serif', fontWeight: 'bold' }}
-											numberOfLines={1}>
-											{u.name}
-										</Text>}
-										subtitle={<Text style={{ height: 35, paddingLeft: 10, fontSize: 15, fontFamily: 'sans-serif' }}
-											numberOfLines={1}>{u.messages.length > 0 ? u.messages[0].chatter.username + ': ' + u.messages[0].content
+										title={
+											<Text style={{ height: 35, 
+															paddingLeft: 10, 
+															fontSize: 20, 
+															color:'black', 
+															textAlignVertical:'center',
+															fontFamily: 'sans-serif', 
+															fontWeight: 'bold' }}
+															numberOfLines={1}>
+												{u.name}
+											</Text>}
+										subtitle={
+											<Text style={{ height: 35, 
+															paddingLeft: 10, 
+															fontSize: 15,
+															textAlignVertical:'top',
+															fontFamily: 'sans-serif' }}
+															numberOfLines={1}>
+												{u.messages.length > 0 ? u.messages[0].chatter.username + ': ' + u.messages[0].content
 												: "Hãy gửi tin nhắn đầu tiên"}
-										</Text>}
-										avatarStyle={{ height: 60, width: 60, }}
-
+											</Text>}
+										avatarStyle={{ height: 60, width: 60, borderRadius:30 }}
 										key={i}
 										roundAvatar
 										hideChevron={true}
-										avatar={require("../assets/image/chatroom.png")}
+										avatar={{uri: 'http://www.freeiconspng.com/uploads/live-chat-icon-19.png'}}
 										onPress={() => {
 											Actions.chatroom({
-												"giobalThis": this.props.giobalThis,
-												"groupInfo": {
-													"group_id": u._id,
-													"name": u.name
-												},
-												'userInfo': this.props.userInfo
+												"groupInfo": u,
+												'userInfo': this.props.userInfo,
+												'currentRegion': this.props.currentRegion
 											})
 										}} />
 								)
@@ -146,7 +138,7 @@ class ChatRoomsPage extends Component {
 
 				</ScrollView>
 				<ActionButton buttonColor="rgba(231,76,60,1)">
-					<ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={() => { Actions.createroom({ 'userInfo': this.props.userInfo }) }}>
+					<ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={() => { Actions.createroom({ 'userInfo': this.props.userInfo, 'friendsList': this.props.friendsList }) }}>
 						<Icon name="md-create" />
 					</ActionButton.Item>
 
@@ -159,7 +151,7 @@ class ChatRoomsPage extends Component {
 function mapStateToProps(state) {
 	return {
 		getRoomsResponse: state.getRoomsResponse,
-		getFriendsRespose: state.getFriendsRespose
+		getFriendsResponse: state.getFriendsResponse
 	}
 }
 
