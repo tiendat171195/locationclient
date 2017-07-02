@@ -11,7 +11,8 @@ import {
     Dimensions,
     TouchableOpacity,
     Slider,
-    ToolbarAndroid
+    ToolbarAndroid,
+    ScrollView
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { Actions } from "react-native-router-flux";
@@ -23,6 +24,13 @@ const LATITUDE_DELTA = 0.01;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 var giobalThis;
+import {
+    CONTENT_COLOR,
+    CONTENT_TEXT_COLOR,
+    MAIN_FONT,
+    MAIN_COLOR,
+    PLACEHOLDER_TEXT_COLOR
+} from './type.js';
 // create a component
 class NewAppointment extends Component {
     constructor(props) {
@@ -34,7 +42,7 @@ class NewAppointment extends Component {
             end_date: null,
             end_date_text: '',
             appointment_location: null,
-            appointment_address: null,
+            appointment_address: '',
             radius: 0,
         }
         this.showEndDatePicker = this.showEndDatePicker.bind(this);
@@ -44,7 +52,7 @@ class NewAppointment extends Component {
         this.onMapPress = this.onMapPress.bind(this);
         this.onActionSelected = this.onActionSelected.bind(this);
     }
-    componentWillMount(){
+    componentWillMount() {
         this.startNewSocket();
     }
     convertStartingDate() {
@@ -57,7 +65,7 @@ class NewAppointment extends Component {
             + ' ngày '
             + startingDate.getDate()
             + '/'
-            + (1+startingDate.getMonth())
+            + (1 + startingDate.getMonth())
             + '/'
             + (1900 + startingDate.getYear());
         this.setState({
@@ -72,9 +80,9 @@ class NewAppointment extends Component {
             + ':'
             + (endingDate.getMinutes() < 10 ? '0' + endingDate.getMinutes() : endingDate.getMinutes())
             + ' ngày '
-            + endingDate.getDay()
+            + endingDate.getDate()
             + '/'
-            + endingDate.getMonth()
+            + (1 + endingDate.getMonth())
             + '/'
             + (1900 + endingDate.getYear());
         this.setState({
@@ -194,18 +202,7 @@ class NewAppointment extends Component {
             console.log("unauthorized: " + JSON.stringify(msg.data));
         });
     }
-    addNewAppointment(){
-        console.log('add_appoinment');
-        console.log({
-            "group_id": this.props.groupInfo._id,
-            "address": this.state.appointment_address,
-            "start_time": this.state.start_date,
-            "end_time": this.state.end_date,
-            "latlng": {
-                "lat": this.state.appointment_location.latitude,
-                "lng": this.state.appointment_location.longitude
-            }
-        });
+    addNewAppointment() {
         this.socket.emit('add_appointment', JSON.stringify({
             "group_id": this.props.groupInfo._id,
             "address": this.state.appointment_address,
@@ -222,59 +219,71 @@ class NewAppointment extends Component {
         return (
             <View style={{ flex: 1 }}>
                 <ToolbarAndroid
-                    style={{ height: 50, backgroundColor: 'sandybrown' }}
+                    style={{ height: 50, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title={'Cài đặt điểm hẹn'}
                     onIconClicked={() => { Actions.pop() }}
                     actions={[
                         {
-                            title:'Tạo',
-                            icon: {uri:'http://www.iconhot.com/icon/png/wp-woothemes-ultimate/256/checkmark-4.png'},
+                            title: 'Tạo',
+                            icon: { uri: 'http://www.iconhot.com/icon/png/wp-woothemes-ultimate/256/checkmark-4.png' },
                             show: 'always'
                         }]}
                     onActionSelected={this.onActionSelected} />
-                <View style={{ padding: 5, flex: 1 }}>
-                    <View>
+                <ScrollView style={{ flex: 1, backgroundColor: 'silver' }}
+                    showsVerticalScrollIndicator={false}>
+                    <View style={{ backgroundColor: 'white', padding: 5 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 40, width: 40 }}
+                                style={{ height: 30, width: 30, marginRight: 5 }}
                                 source={{ uri: 'http://www.freeiconspng.com/uploads/schedule-icon-7.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Ngày bắt đầu:</Text>
                         </View>
-                        <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
-                            <TextInput editable={false}
-                                style={{ flex: 1, fontSize: 25, color: 'dimgray' }}>
-                                {this.state.start_date === null ? 'Chưa chọn thời gian bắt đầu' : '' + this.state.start_date_text}
-                            </TextInput>
-                            <Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
-                                onPress={this.showStartTimePicker}>
-                                Sửa
-                    </Text>
-                        </View>
+                        <Text
+                            style={{
+                                flex: 1,
+                                fontSize: 20,
+                                color: CONTENT_TEXT_COLOR,
+                                backgroundColor: CONTENT_COLOR,
+                                borderRadius: 10,
+                                paddingHorizontal: 10,
+                                padding: 5,
+                                marginTop: 3,
+                                marginHorizontal: 10
+                            }}
+                            onPress={this.showStartTimePicker.bind(this)}>
+                            {this.state.start_date === null ? 'Chưa chọn thời gian bắt đầu' : this.state.start_date_text}
+                        </Text>
                     </View>
 
-                    <View>
+                    <View style={{ backgroundColor: 'white', padding: 5, paddingBottom:10 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 40, width: 40 }}
+                                style={{ height: 30, width: 30, marginRight:5 }}
                                 source={{ uri: 'http://www.freeiconspng.com/uploads/schedule-icon-7.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Ngày kết thúc:</Text>
                         </View>
-                        <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
-                            <TextInput editable={false}
-                                style={{ flex: 1, fontSize: 25, color: 'dimgray' }}>
-                                {this.state.end_date === null ? 'Chưa chọn thời gian kết thúc' : '' + this.state.end_date_text}
-                            </TextInput><Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
-                                onPress={this.showEndTimePicker}>
-                                Sửa
-                    </Text>
-                        </View>
+                        <Text
+                            style={{
+                                flex: 1,
+                                fontSize: 20,
+                                color: CONTENT_TEXT_COLOR,
+                                backgroundColor: CONTENT_COLOR,
+                                borderRadius: 10,
+                                paddingHorizontal: 10,
+                                padding: 5,
+                                marginTop: 3,
+                                marginHorizontal: 10
+                            }}
+                            onPress={this.showEndTimePicker.bind(this)}>
+                            {this.state.end_date === null ? 'Chưa chọn thời gian kết thúc' : this.state.end_date_text}
+                        </Text>
                     </View>
 
-                    <View>
+                    <View style={{ backgroundColor: 'white', padding: 5, marginTop: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 40, width: 40 }}
+                                style={{ height: 30, width: 30, marginRight:5 }}
                                 resizeMode='contain'
                                 source={{ uri: 'http://www.kasal.com/images/site_assets/icon-address.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Địa chỉ:</Text>
@@ -282,15 +291,44 @@ class NewAppointment extends Component {
                         <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
                             <TextInput
                                 placeholder="Nhập địa chỉ điểm hẹn"
-                                style={{ flex: 1, fontSize: 25, color: 'dimgray' }}
-                            >
-                                {this.state.appointment_address}
-                            </TextInput>
+                                style={{
+                                    flex: 1,
+                                    fontSize: 20,
+                                    color: CONTENT_TEXT_COLOR,
+                                    backgroundColor: CONTENT_COLOR,
+                                    borderRadius: 10,
+                                    marginTop: 3,
+                                    paddingHorizontal: 10,
+                                    marginRight: 5,
+                                    marginLeft: 10
+                                }}
+                                value={this.state.appointment_address}
+                                underlineColorAndroid='transparent'
+                                onChangeText={(text) => this.setState({ appointment_address: text })}
+                            />
+
+                            <TouchableOpacity style={{ alignSelf: 'center' }} onPress={async () => {
+                                var marker = await this.getPointerInfo(this.state.appointment_address);
+                                this.setState({
+                                    appointment_address: marker.address,
+                                    appointment_location: marker.coordinate
+                                });
+                                this.refs.map.animateToRegion({
+                                    latitude: marker.coordinate.latitude,
+                                    longitude: marker.coordinate.longitude,
+                                    latitudeDelta: LATITUDE_DELTA,
+                                    longitudeDelta: LONGITUDE_DELTA
+                                }, 2000);
+                            }}>
+                                <Image
+                                style={{height:30, width:30}}
+                                source={{uri:'https://www.shareicon.net/download/2015/08/04/80098_find_512x512.png'}} />
+                            </TouchableOpacity>
                         </View>
                     </View>
 
 
-                    <View style={{ flex: 1 }}>
+                    <View style={{ width: width, height: 250 }}>
                         <MapView
                             ref="map"
                             style={{ ...StyleSheet.absoluteFillObject, flex: 1 }}
@@ -341,7 +379,7 @@ class NewAppointment extends Component {
                                 style={{ margin: 10 }} />
                         </View>
                     </View>
-                </View>
+                </ScrollView>
             </View>
         );
     }

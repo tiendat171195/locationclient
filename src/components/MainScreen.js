@@ -8,7 +8,7 @@ import {
 	ScrollView,
 	StyleSheet,
 	Dimensions,
-	Image
+	Image,
 } from 'react-native';
 import { Actions, ActionConst } from "react-native-router-flux";
 import ScrollableTabView, { DefaultTabBar, } from 'react-native-scrollable-tab-view';
@@ -28,7 +28,7 @@ import { Card, ListItem } from 'react-native-elements';
 import Search from 'react-native-search-box';
 import apis from '../apis/api.js';
 import FCM, { FCMEvent, RemoteNotificationResult, WillPresentNotificationResult, NotificationType } from 'react-native-fcm';
-
+import SplashScreen from 'react-native-splash-screen';
 import { connect } from 'react-redux';
 import {
 	searchFriend,
@@ -55,23 +55,38 @@ class MainScreen extends Component {
 			friends_list: [],
 			//Socket
 			appointments: [],
+			routes: [],
+			searchtext: ''
 		};
 		this.startNewSocket = this.startNewSocket.bind(this);
 		this.addSocketCallback = this.addSocketCallback.bind(this);
 		this.getSocketData = this.getSocketData.bind(this);
 	}
 	componentWillMount() {
+		
+	}
+	componentDidMount() {
+		this.configFCM();
+		console.log(this.props.userInfo);
+		this.startGeolocation();
+		this.props.getRooms();
+		this.props.getFriends();
+		setTimeout(function() {
+			SplashScreen.hide();
+		}, 1500);
+		
+	}
+	configFCM(){
 		//FCM
-		FCM.requestPermissions(); // for iOS
 		FCM.getFCMToken().then(async (token) => {
 			console.log(token);
 			let UnsubscribeAPI = await apis.Unsubscribe(token);
-			let responseAPI = await apis.Subscribe(token);
+			/* let responseAPI = await apis.Subscribe(token);
 			console.log(responseAPI);
 			if (responseAPI.status_code === 200) {
 				console.log('Subscribe thanh cong');
 
-			}
+			} */
 			// store fcm token in your server
 		});
 		this.notificationListener = FCM.on(FCMEvent.Notification, async (notif) => {
@@ -93,13 +108,6 @@ class MainScreen extends Component {
 			// fcm token may not be available on first load, catch it here
 		});
 	}
-	componentDidMount() {
-		console.log(this.props.userInfo);
-		this.startGeolocation();
-		this.props.getRooms();
-		this.props.getFriends();
-
-	}
 	componentWillReceiveProps(nextProps) {
 		if (!this.props.getRoomsResponse.fetched && nextProps.getRoomsResponse.fetched) {
 			this.state.rooms_list = [];
@@ -111,6 +119,8 @@ class MainScreen extends Component {
 		}
 		if (!this.props.getFriendsResponse.fetched && nextProps.getFriendsResponse.fetched) {
 			this.state.friends_list = [];
+			console.log('getFriends');
+			console.log(nextProps.getFriendsResponse);
 			for (var i = nextProps.getFriendsResponse.data.friends.length - 1; i >= 0; i--) {
 				this.state.friends_list.push({
 					'name': nextProps.getFriendsResponse.data.friends[i].username,
@@ -214,10 +224,9 @@ class MainScreen extends Component {
 	//Socket ---------------------------------------------------------------
 
 	startNewSocket() {
-		console.log('startNewSocketmap Mainpage');
-		console.log(SERVER_PATH + 'maps?group_id=' +  this.state.rooms_list[0]._id);
+		console.log('start socket main');
 		if (this.socket !== undefined) this.socket.disconnect();
-		this.socket = io(SERVER_PATH + 'maps?group_id=' +  this.state.rooms_list[0]._id +'/', { jsonp: false });
+		this.socket = io(SERVER_PATH + 'maps?group_id=', { jsonp: false });
 		this.socket.emit('authenticate', { "token": this.props.userInfo.user_token });
 		this.socket.on('authenticated', function () {
 			console.log('ket noi toi socket main');
@@ -231,8 +240,13 @@ class MainScreen extends Component {
 
 	}
 	getSocketData() {
+		this.state.appointments = [];
+		this.state.routes = [];
 		for (var index = 0; index < this.state.rooms_list.length; index++) {
 			this.socket.emit('get_appointments', JSON.stringify({
+				"group_id": this.state.rooms_list[index]._id
+			}));
+			this.socket.emit('get_route', JSON.stringify({
 				"group_id": this.state.rooms_list[index]._id
 			}));
 		}
@@ -241,18 +255,6 @@ class MainScreen extends Component {
 	addSocketCallback() {
 		//GET APPOINTMENTS
 		this.socket.on("get_appointments_callback", function (data) {
-			console.log('get_appointments_callback main');
-			console.log(data);
-			if(!(data.appointments.length > 0)){
-				giobalThis.state.appointments.push({
-					group_id: data.appointments[0].group,
-					appointments: []
-				});
-				giobalThis.setState({
-					
-				})
-				return;
-			} 
 			let tempArr = [];
 			data.appointments.map(u => {
 				tempArr.push({
@@ -269,16 +271,24 @@ class MainScreen extends Component {
 				})
 			});
 
-			for (var index = 0; index < giobalThis.state.appointments.length; index++) {
-				if (data.appointments[0].group == giobalThis.state.appointments[index].group_id) {
-					giobalThis.state.appointments[index].appointments = tempArr;
-					return;
-				}
+			if(giobalThis.state.appointments.find(obj => obj.group_id == data.group_id) !== undefined){
+				giobalThis.state.appointments.find(obj => obj.group_id == data.group_id).appointments = tempArr;
+				return;
 			}
 			giobalThis.state.appointments.push({
-				group_id: data.appointments[0].group,
+				group_id: data.group_id,
 				appointments: tempArr
 			});
+		});
+
+		////GET ROUTE
+		this.socket.on("get_route_callback", function (data) {
+			if(giobalThis.state.routes.find(obj => obj.group_id == data.group_id) !== undefined){
+				let index = giobalThis.state.routes.findIndex(obj => obj.group_id == data.group_id);
+				giobalThis.state.routes[index] = data;
+				return;
+			}
+			giobalThis.state.routes.push(data);
 		});
 	}
 	render() {
@@ -292,7 +302,15 @@ class MainScreen extends Component {
 					contentWidth={30}
 					onFocus={() => { this.setState({ isSearching: true }); console.log('onFocus') }}
 					onCancel={() => { this.setState({ isSearching: false }); console.log('onCancel') }}
-					onChangeText={(text) => this.props.searchFriend(text)} />
+					onChangeText={(text) =>{
+						this.state.searchtext = text;
+						setTimeout(function() {
+							if(giobalThis.state.searchtext == text){
+								giobalThis.props.searchFriend(text);
+							}
+						}, 400);
+						
+						}} />
 				<View style={{ flex: 1, backgroundColor: 'pink' }}>
 
 
@@ -308,7 +326,9 @@ class MainScreen extends Component {
 							userInfo: this.props.userInfo,
 							currentRegion: this.state.currentRegion,
 							roomsList: this.state.rooms_list,
-							friendsList: this.state.friends_list
+							friendsList: this.state.friends_list,
+							appointments: this.state.appointments,
+							routes: this.state.routes
 						}} />
 						<FriendsList tabLabel='ios-people'{...{
 							friendsList: this.state.friends_list
@@ -317,7 +337,8 @@ class MainScreen extends Component {
 							userInfo: this.props.userInfo,
 							roomsList: this.state.rooms_list,
 							currentRegion: this.state.currentRegion,
-							appointments: this.state.appointments
+							appointments: this.state.appointments,
+							routes: this.state.routes,
 						}} />
 						<SettingPage tabLabel="ios-settings" {...{ 'userInfo': this.props.userInfo }} />
 					</ScrollableTabView>

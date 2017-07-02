@@ -29,18 +29,17 @@ import apis from './apis/api.js';
 import SplashScreen from 'react-native-splash-screen';
 
 export default class App extends Component {
-   constructor(props) {
+  constructor(props) {
     super(props);
     this.state = {
       logged: false
     }
   }
-  componentWillMount(){
-      this.checkLoggedIn();
-    
+  async componentWillMount() {
+    await this.checkLoggedIn();
   }
-  componentDidMount(){
-    
+  componentDidMount() {
+
   }
   async SignIn(Username, Password) {
     let responseAPI = await apis.SignIn(Username, Password);
@@ -62,13 +61,10 @@ export default class App extends Component {
         console.error(error);
       }
       apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
-      setTimeout(()=>{
-        SplashScreen.hide();
-      }, 500);
       Actions.mainscreen({
         'userInfo': responseAPI
       });
-      
+
     }
     else {
       SplashScreen.hide();
@@ -88,13 +84,13 @@ export default class App extends Component {
           await this.SignIn(userInfo.username, userInfo.password);
         }
       }
-      else{
+      else {
         SplashScreen.hide();
       }
     } catch (error) {
       console.error(error);
     }
-  } 
+  }
   render() {
     return (
       <Provider store={store}>
@@ -102,7 +98,7 @@ export default class App extends Component {
           <Scene key="root" hideNavBar={true}>
             <Scene key="login" component={Login} initial={!this.state.logged} />
             <Scene key="register" component={Register} />
-            <Scene key="mainscreen" component={MainScreen} initial={this.state.logged} />
+            <Scene key="mainscreen" component={MainScreen} />
             <Scene key="chatroomspage" component={ChatRoomsPage} />
             <Scene key="chatroom" component={ChatRoom} />
             <Scene key="roomsetting" component={RoomSetting} />

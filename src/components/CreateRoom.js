@@ -16,7 +16,12 @@ import { Actions } from "react-native-router-flux";
 import apis from '../apis/api.js';
 import { MAIN_COLOR, MAIN_FONT } from './type.js';
 import { Card, ListItem } from 'react-native-elements';
-export default class CreateRoom extends Component {
+
+import { connect } from 'react-redux';
+import {
+	getRooms,
+} from '../actions';
+class CreateRoom extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -44,7 +49,7 @@ export default class CreateRoom extends Component {
             console.log(user);
             await apis.addNewMember(responseAPI.group_id, user._id);
         })
-        
+        this.props.getRooms();
 
         Actions.pop();
         //if(responseAPI.status == "success"){
@@ -73,14 +78,22 @@ export default class CreateRoom extends Component {
                     }} />
                 <ScrollView>
                     <TextInput
-                        style={{ fontSize: 25, fontFamily: MAIN_FONT, padding: 20, marginHorizontal: 20 }}
+                        style={{ fontSize: 25, 
+                                fontFamily: MAIN_FONT, 
+                                marginHorizontal: 20, 
+                                marginVertical:5, 
+                                backgroundColor:'silver', 
+                                borderRadius:5,
+                                 }}
                         onChangeText={(text) => this.setState({ newRoomName: text })}
                         value={this.state.newRoomName}
                         placeholder="Tên phòng"
+                        underlineColorAndroid='transparent'
                     />
-                    <View style={{ paddingLeft: 30, flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ paddingLeft: 30, flexDirection: 'row', alignItems: 'center', }}>
                         <Image
-                            style={{ height: 40, width: 40 }}
+                            style={{ height: 30, width: 30, marginTop:10, alignSelf:'center' }}
+                            resizeMode='contain'
                             source={{ uri: 'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png' }} />
                         <Text style={{ fontSize: 20, paddingLeft: 3, color: 'black', fontWeight: 'bold' }}>Thêm thành viên</Text>
                     </View>
@@ -150,3 +163,19 @@ export default class CreateRoom extends Component {
         );
     }
 }
+
+function mapStateToProps(state) {
+	return {
+	}
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+		getRooms: () => dispatch(getRooms()),
+	}
+}
+
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(CreateRoom);

@@ -161,6 +161,7 @@ dependencies {
         force = true;
     }
     compile project(':react-native-blur')
+    compile project(':react-native-fetch-blob')
 }
 
 // Run this once to be able to run the application with BUCK

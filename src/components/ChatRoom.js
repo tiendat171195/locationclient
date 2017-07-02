@@ -16,7 +16,8 @@ import DialogAndroid from 'react-native-dialogs';
 import apis from '../apis/api.js';
 import RoomSetting from './RoomSetting.js';
 import {
-	SERVER_PATH
+	SERVER_PATH,
+	MAIN_COLOR
 } from './type.js';
 var myThis;
 let id = 99999999;
@@ -98,11 +99,6 @@ export default class ChatRoom extends Component {
 
 	}
 	componentWillMount() {
-		console.log('this.props.userInfo.user_token');
-		
-		console.log(this.props.userInfo.user_token);
-		console.log('this.props.groupInfo.group_id');
-		console.log(this.props.groupInfo._id);
 		this.startSocket();
 	}
 	onSend(messages = []) {
@@ -147,7 +143,9 @@ export default class ChatRoom extends Component {
 			case 0:
 				Actions.roomsetting({ "userInfo": this.props.userInfo, 
 				"groupInfo": this.props.groupInfo,
-				'currentRegion': this.props.currentRegion });
+				'currentRegion': this.props.currentRegion,
+				appointments: this.props.appointments,
+				route: this.props.route });
 				break;
 			default:
 				break;
@@ -161,7 +159,7 @@ export default class ChatRoom extends Component {
 		return (
 			<View style={{ flex: 1 }}>
 				<ToolbarAndroid
-					style={{ height: 50, backgroundColor: 'sandybrown' }}
+					style={{ height: 50, backgroundColor: MAIN_COLOR }}
 					navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
 					title={this.props.groupInfo.name}
 					actions={[

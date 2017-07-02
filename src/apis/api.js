@@ -2,10 +2,11 @@ import {
 	Alert,
 	AsyncStorage
 } from 'react-native';
+import RNFetchBlob from 'react-native-fetch-blob';
 import {
 	SERVER_PATH
 } from '../components/type.js';
-const googleAPI_key = "AIzaSyB2jkGH3HlHuXQ4OQx7wtp96mjjXIHC0rU";
+const googleAPI_key = "AIzaSyDLK8SCinOR_O6homI06aeza7qXPNVdJhQ";
 var token = '';
 var user_id = '';
 var apis = {
@@ -126,31 +127,31 @@ var apis = {
 			return console.error(error);
 		}
 	},
-	async searchFriend(keyword) { 
-		
-				return new Promise(async (resolve, reject) => {
-					try {
-						let response = await fetch(SERVER_PATH + 'search/friends?keyword='+keyword,
-							{
-								'method': 'GET',
-								headers: {
-									'Accept': 'application/json',
-									'Content-Type': 'application/json',
-									'token': token,
-									//'user_id': user_id,
-								}
-							});
-						let responseJson = await response.json();
-						return resolve(responseJson);
-					}
-					catch (error) {
-						return reject(error);
-					}
-				})
-		
-		
-				
-			},
+	async searchFriend(keyword) {
+
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'search/friends?keyword=' + keyword,
+					{
+						'method': 'GET',
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				return reject(error);
+			}
+		})
+
+
+
+	},
 	async getFriendsList() { //done redux
 
 		return new Promise(async (resolve, reject) => {
@@ -174,7 +175,7 @@ var apis = {
 		})
 
 
-		
+
 	},
 	async getFriendsRequestList() {
 		try {
@@ -236,17 +237,20 @@ var apis = {
 			return null;
 		}
 	},
-	async deleteFriendRequest(friendId) {
+	async declineFriendRequest(friendId) {
 		try {
-			let response = await fetch(SERVER_PATH + 'friends/' + friendId + '/delete/',
+			let response = await fetch(SERVER_PATH + 'friends/delete/',
 				{
-					'method': 'POST',
+					'method': 'DELETE',
 					headers: {
 						'Accept': 'application/json',
 						'Content-Type': 'application/json',
 						'token': token,
 						//'user_id': user_id,
-					}
+					},
+					body: JSON.stringify({
+						friend_id: friendId
+					})
 				});
 			let responseJson = await response.json();
 			return responseJson;
@@ -301,7 +305,73 @@ var apis = {
 			}
 		})
 
-		
+
+	},
+	async getRoomsRequest(){
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'users/group_requests/',
+					{
+						method: "GET",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				reject(error);
+				return null;
+			}
+		})
+	},
+	async acceptRoom(groupID){
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'users/group_requests/'+groupID+'/accept/',
+					{
+						method: "POST",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				reject(error);
+				return null;
+			}
+		})
+	},
+	async declineRoomRequest(groupID){
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'users/group_requests/'+groupID+'/delete/',
+					{
+						method: "DELETE",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				reject(error);
+				return null;
+			}
+		})
 	},
 	async getRoomInfo(groupID) { //Done redux
 		return new Promise(async (resolve, reject) => {
@@ -325,7 +395,7 @@ var apis = {
 			}
 		})
 
-		
+
 	},
 	async addNewMember(GroupID, NewMemberID) {
 		try {
@@ -354,13 +424,26 @@ var apis = {
 	async findDirection_googleAPI(origin, destination, waypoints = []) {
 		try {
 			const directionSERVER_PATH = "https://maps.googleapis.com/maps/api/directions/json?";
+			let waypointsText = '';
+			if (waypoints.length > 0) {
+				waypointsText = '&waypoints=optimize:true|';
+				waypoints.map((u, i) => {
+					waypointsText += u.latitude + ',' + u.longitude + '|';
+				})
+			}
+
+			console.log('waypoints');
+			console.log(waypoints);
+			console.log(waypointsText);
 			console.log(directionSERVER_PATH +
 				"origin=" + origin.latitude + ',' + origin.longitude +
 				"&destination=" + destination.latitude + ',' + destination.longitude +
+				waypointsText +
 				"&key=" + googleAPI_key);
 			let response = await fetch(directionSERVER_PATH +
 				"origin=" + origin.latitude + ',' + origin.longitude +
 				"&destination=" + destination.latitude + ',' + destination.longitude +
+				waypointsText +
 				"&key=" + googleAPI_key);
 			let responseJson = await response.json();
 			return responseJson;
@@ -381,31 +464,40 @@ var apis = {
 				"&destinations=" + destination.latitude + ',' + destination.longitude +
 				"&key=" + googleAPI_key);
 			let responseJson = await response.json();
-			if (responseJson.rows[0].elements[0].hasOwnProperty("status") && responseJson.rows[0].elements[0].status === "ZERO_RESULTS") {
-				return -1;
+			console.log(responseJson);
+			if (responseJson.status == "OK" && responseJson.rows[0].elements[0].status == "OK") {
+				return responseJson.rows[0].elements[0].distance.value;
 			}
-			return responseJson.rows[0].elements[0].distance.value;
+			return -1;
 		} catch (error) {
 			console.error(error);
 			return null;
 		}
 	},
-	async distanceMatrix_googleAPI(origin, destination) {
+	async distanceMatrix_googleAPI(origin = [], destination = []) {
 		try {
 			const distanceSERVER_PATH = "https://maps.googleapis.com/maps/api/distancematrix/json?";
-			console.log(distanceSERVER_PATH +
-				"origins=" + origin.latitude + ',' + origin.longitude +
-				"&destinations=" + destination.latitude + ',' + destination.longitude +
-				"&key=" + googleAPI_key);
+			let originsText = '';
+			for (var index = 0; index < origin.length; index++) {
+				var element = origin[index];
+				originsText += '' + element.latitude + ',' + element.longitude + '|';
+			}
+			let destinationsText = '';
+			for (var index = 0; index < destination.length; index++) {
+				var element = destination[index];
+				destinationsText += '' + element.latitude + ',' + element.longitude + '|';
+
+			}
+
 			let response = await fetch(distanceSERVER_PATH +
-				"origins=" + origin.latitude + ',' + origin.longitude +
-				"&destinations=" + destination.latitude + ',' + destination.longitude +
+				"origins=" + originsText +
+				"&destinations=" + destinationsText +
 				"&key=" + googleAPI_key);
 			let responseJson = await response.json();
-			if (responseJson.rows[0].elements[0].hasOwnProperty("status") && responseJson.rows[0].elements[0].status === "ZERO_RESULTS") {
-				return -1;
+			if (responseJson.status == "OK") {
+				return responseJson;
 			}
-			return responseJson.rows[0].elements[0].distance.value;
+			return null;
 		} catch (error) {
 			console.error(error);
 			return null;
@@ -430,5 +522,71 @@ var apis = {
 			return null;
 		}
 	},
+	async uploadImage(imagePath){
+		try{
+
+			let response = await RNFetchBlob.fetch('POST', 'https://api.cloudinary.com/v1_1/togoimagestore/image/upload', {
+				'Content-Type': 'multipart/form-data'
+			  }, [
+				{name: 'file', filename: 'test', type: 'image', data: RNFetchBlob.wrap(imagePath)},
+				{name: 'upload_preset', data: 'togopreset'}
+			]);
+			console.log('uploadImage');
+			console.log(response);
+			if(response.respInfo.status == 200){
+				let responseJson = await JSON.parse(response.data);
+				return responseJson.url;
+			}
+			return null;
+		}catch(error){
+			console.error(error);
+			return null;
+		}
+	},
+	async updateUserImage(imageUrl){
+		try {
+			let response = await fetch(SERVER_PATH + 'user/avatar/',
+				{
+					method: "POST",
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/json',
+						'token': token,
+					},
+					body: JSON.stringify({
+						avatar_url:imageUrl
+					})
+				});
+			let responseJson = await response.json();
+			return responseJson;
+		}
+		catch (error) {
+			console.error(error);
+			return null;
+		}
+	},
+	async updateGroupImage(imageUrl, GroupID){
+		try {
+			let response = await fetch(SERVER_PATH + 'groups/' + GroupID + '/avatar/',
+				{
+					method: "POST",
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/json',
+						'token': token,
+					},
+					body: JSON.stringify({
+						avatar_url:imageUrl
+					})
+				});
+			let responseJson = await response.json();
+			console.log(responseJson);
+			return responseJson;
+		}
+		catch (error) {
+			console.error(error);
+			return null;
+		}
+	}
 };
 module.exports = apis;

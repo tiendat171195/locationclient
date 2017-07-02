@@ -21,6 +21,9 @@ import apis from '../apis/api.js';
 import { connect } from 'react-redux';
 import { getFriends } from '../actions';
 import {
+	ACTIONBUTTON_COLOR
+} from './type.js';
+import {
 	DEFAULT_AVATAR,
 	CHATBOX,
 } from './images.js';
@@ -99,6 +102,14 @@ class FriendsList extends Component {
 			console.error(error);
 		}
 	}
+	async declineFriendRequest(groupID){
+		try {
+			let responseAPI = await apis.declineFriendRequest(groupID);
+		}
+		catch (error) {
+			console.error(error);
+		}
+	}
 	onActionSelected(position) {
 
 		switch (position) {
@@ -165,7 +176,7 @@ class FriendsList extends Component {
 							style={{height:40, width:40}}
 							source={{uri:'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png'}} />
 							<Text style={{fontSize: 20, paddingLeft: 3, color:'black', fontWeight:'bold'}}>Yêu cầu kết bạn</Text>
-							</View>w
+							</View>
 							<Card containerStyle={{ margin: 0, padding: 0 }} >
 								{
 									this.state.friends_request_list.map((request, i) => {
@@ -203,7 +214,7 @@ class FriendsList extends Component {
 							</Card>
 						</View>}
 				</ScrollView>
-				<ActionButton buttonColor="rgba(231,76,60,1)">
+				<ActionButton buttonColor={ACTIONBUTTON_COLOR}>
 					<ActionButton.Item buttonColor='#9b59b6' title="Thêm bạn" onPress={this.showAddFriendDialog.bind(this)}>
 						<Icon name="md-create" />
 					</ActionButton.Item>

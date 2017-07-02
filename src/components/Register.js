@@ -76,13 +76,7 @@ class Register extends Component {
         }
     }
     convertBirthday() {
-        console.log(this.state.birthday);
         let birthday = new Date(this.state.birthday);
-        console.log(birthday);
-        console.log(birthday.getDate());
-        console.log(birthday.getMonth());
-        console.log(birthday.getYear());
-        
         this.state.birthday_text = '';
         let tempText = '';
         tempText =
@@ -91,7 +85,6 @@ class Register extends Component {
             + (1+birthday.getMonth())
             + '/'
             + (1900 + birthday.getYear());
-        console.log(tempText);
         this.setState({
             birthday_text: tempText
         })

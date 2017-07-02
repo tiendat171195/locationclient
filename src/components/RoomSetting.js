@@ -16,14 +16,20 @@ import {
     Button,
     ToastAndroid,
     Alert,
-    ListView
+    ListView,
+    Modal,
+    CameraRoll
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 import io from 'socket.io-client/dist/socket.io.js';
 import apis from '../apis/api.js';
 import MapView from 'react-native-maps';
-
-
+import {
+    MAIN_COLOR
+} from './type.js';
+import {
+    DEFAULT_ROOM_AVATAR
+} from './images.js';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const DEFAULT_LATITUDE = 10.762934;
@@ -32,6 +38,7 @@ const LATITUDE_DELTA = 0.01;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 var giobalThis;
 var id = 100;
+let avatar = 'https://www.timeshighereducation.com/sites/default/files/byline_photos/default-avatar.png';
 //const API_path = 'http://192.168.83.2:3000/';
 const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 
@@ -44,16 +51,17 @@ export default class RoomSetting extends Component {
             room_name: this.props.groupInfo.name,
             editting_room_name: false,
             start_location: null,
-            start_address: null,
+            start_address: '',
             start_date: null,
             end_location: null,
             end_address: null,
             end_date: null,
             stopovers: [],
             direction_coordinates: [],
-            appointments: [],
             dataMembersSource: ds.cloneWithRows([]),
             dataAppointmentsSource: ds.cloneWithRows([]),
+            modalVisible: false,
+			photos: [],
         };
 
         //this.onMapPress = this.onMapPress.bind(this);
@@ -61,6 +69,7 @@ export default class RoomSetting extends Component {
         this.getSocketData = this.getSocketData.bind(this);
         this.getPointerInfo = this.getPointerInfo.bind(this);
         this.findDirection = this.findDirection.bind(this);
+        this.getRouteInfo = this.getRouteInfo.bind(this);
     }
     startNewSocket(groupID) {
         if (groupID === null) return;
@@ -99,65 +108,10 @@ export default class RoomSetting extends Component {
 
         this.socket.on('get_route_callback', async function (data) {
             console.log("get_route_callback roomsetting");
-            console.log(data);
-            if (data.hasOwnProperty("start_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.start_latlng.lat,
-                    longitude: data.start_latlng.lng
-                });
-                giobalThis.state.start_location = {
-                    latitude: data.start_latlng.lat,
-                    longitude: data.start_latlng.lng
-                };
-                giobalThis.state.start_address = pointer.address;
-            }
 
-            if (data.hasOwnProperty("end_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.end_latlng.lat,
-                    longitude: data.end_latlng.lng
-                });
-                giobalThis.state.end_location = {
-                    latitude: data.end_latlng.lat,
-                    longitude: data.end_latlng.lng
-                };
-                giobalThis.state.end_address = pointer.address;
-            }
-
-            giobalThis.state.stopovers = [];
-            data.stopovers.map(u => {
-                giobalThis.state.stopovers.push({
-                    "coordinate":
-                    {
-                        "latitude": u.latlng.lat,
-                        "longitude": u.latlng.lng
-                    }
-                });
-            });
             giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
         });
-        this.socket.on('get_appointments_callback', function (data) {
-            console.log("get_appointments_callback roomsetting");
-            console.log(data);
-            giobalThis.state.appointments = [];
 
-            data.appointments.map(u => {
-                giobalThis.state.appointments.push({
-                    "_id": u._id,
-                    "address": u.address,
-                    "start_time": u.start_time,
-                    "end_time": u.end_time,
-                    "users": u.users,
-                    "coordinate":
-                    {
-                        "latitude": u.latlng.lat,
-                        "longitude": u.latlng.lng
-                    }
-                })
-            });
-            giobalThis.state.dataAppointmentsSource = ds.cloneWithRows(giobalThis.state.appointments);
-            giobalThis.forceUpdate();
-        });
     }
     getSocketData(groupID) {
         this.socket.emit('get_starting_point', JSON.stringify({
@@ -167,9 +121,6 @@ export default class RoomSetting extends Component {
             "group_id": this.props.groupInfo._id
         }));
         this.socket.emit('get_route', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-        this.socket.emit('get_appointments', JSON.stringify({
             "group_id": this.props.groupInfo._id
         }));
 
@@ -228,8 +179,54 @@ export default class RoomSetting extends Component {
             )
         }
     }
+    async getRouteInfo() {
+        data = this.props.route;
+        if (data.hasOwnProperty("start_latlng") && data.start_latlng.lat != undefined) {
+            var pointer = await this.getPointerInfo({
+                latitude: data.start_latlng.lat,
+                longitude: data.start_latlng.lng
+            });
+            this.state.start_location = {
+                latitude: data.start_latlng.lat,
+                longitude: data.start_latlng.lng
+            };
+            this.state.start_address = pointer.address;
+        }
+        else {
+            this.state.start_location = null;
+            this.state.start_address = '';
+        }
+
+        if (data.hasOwnProperty("end_latlng") && data.end_latlng.lat != undefined) {
+            var pointer = await this.getPointerInfo({
+                latitude: data.end_latlng.lat,
+                longitude: data.end_latlng.lng
+            });
+            this.state.end_location = {
+                latitude: data.end_latlng.lat,
+                longitude: data.end_latlng.lng
+            };
+            this.state.end_address = pointer.address;
+        }
+        else {
+            this.state.end_location = null;
+            this.state.end_address = '';
+        }
+
+        this.state.stopovers = [];
+        data.stopovers.map(u => {
+            this.state.stopovers.push({
+                "coordinate":
+                {
+                    "latitude": u.latlng.lat,
+                    "longitude": u.latlng.lng
+                }
+            });
+        });
+    }
     componentWillMount() {
         this.state.dataMembersSource = ds.cloneWithRows(this.props.groupInfo.users);
+        this.state.dataAppointmentsSource = ds.cloneWithRows(this.props.appointments);
         this.startNewSocket(this.props.groupInfo._id);
     }
     convertDate(date) {
@@ -312,40 +309,60 @@ export default class RoomSetting extends Component {
                 longitudeDelta: Math.abs(this.state.start_location.longitude - this.state.end_location.longitude)*1.5,
             }, 2000);
         } */
-
+    getPhotos = () => {
+        console.log('get photo');
+        CameraRoll.getPhotos({
+            first: 100,
+            assetType: 'All'
+        })
+            .then(r => this.setState({ photos: r.edges }));
+    }
+    toggleModal = () => {
+        this.setState({ modalVisible: !this.state.modalVisible });
+    }
     render() {
+        
         return (
             <View style={{ flex: 1, backgroundColor: 'silver' }}>
                 <ToolbarAndroid
-                    style={{ height: 50, backgroundColor: 'sandybrown' }}
+                    style={{ height: 50, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title={'Cài đặt phòng'}
                     onIconClicked={() => { Actions.pop() }}
                     onActionSelected={this.onActionSelected} />
                 <ScrollView style={{ flex: 1 }}>
-                    <View style={{ backgroundColor: 'white', marginBottom: 1, padding: 10 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ backgroundColor: 'white', marginBottom: 1, padding: 10, flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity
+                            style={{ padding: 5, height:70, width:70, backgroundColor: MAIN_COLOR, borderRadius: 35 }}
+                            onPress={() => {
+                                console.log(this.props.groupInfo);
+                                console.log(this.avatar);
+                                this.toggleModal();
+                                this.getPhotos();
+                            }}>
                             <Image
-                                style={{ height: 30, width: 30, resizeMode: 'contain' }}
-                                source={{ uri: 'http://www.freeiconspng.com/uploads/blue-star-icon-14.png' }} />
-                            <Text style={{ fontSize: 25, color: 'black' }}>Tên phòng:</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row' }}>
-                            <TextInput
-                                style={{ flex: 1, fontSize: 25, marginHorizontal: 5, color: 'dimgray' }}
-                                onChangeText={(text) => this.setState({ room_name: text })}
-                                value={this.state.room_name}
-                                editable={this.state.editting_room_name}
-                                onEndEditing={() => {
-                                    this.setState({ editting_room_name: false });
-                                }}
-                            />
-                            {/* <Text style={{ marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
-                            onPress={() => this.state.editting_room_name ?
-                                this.setState({ editting_room_name: false })
-                                : this.setState({ editting_room_name: true })}>
-                            {this.state.editting_room_name ? "Xong" : "Sửa"}
-                        </Text> */}
+                                style={{ height: 60, width: 60, borderRadius:100}}
+                                resizeMode="contain"
+                                source={this.props.avatar_url == undefined || avatar == ''? DEFAULT_ROOM_AVATAR:{uri:this.props.avatar_url}} />
+                        </TouchableOpacity>
+                        <View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Image
+                                    style={{ height: 30, width: 30, resizeMode: 'contain' }}
+                                    source={{ uri: 'http://www.freeiconspng.com/uploads/blue-star-icon-14.png' }} />
+                                <Text style={{ fontSize: 25, color: 'black' }}>Tên phòng:</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row' }}>
+                                <TextInput
+                                    style={{ flex: 1, fontSize: 25, marginLeft:25, color: 'dimgray' }}
+                                    onChangeText={(text) => this.setState({ room_name: text })}
+                                    value={this.state.room_name}
+                                    editable={this.state.editting_room_name}
+                                    onEndEditing={() => {
+                                        this.setState({ editting_room_name: false });
+                                    }}
+                                />
+                            </View>
                         </View>
                     </View>
                     <View style={{ backgroundColor: 'white', marginBottom: 1, padding: 10 }}>
@@ -410,7 +427,11 @@ export default class RoomSetting extends Component {
                             dataSource={this.state.dataAppointmentsSource}
                             renderFooter={() => <View style={{ flexDirection: 'column', alignItems: 'center', margin: 5, maxWidth: width - 30, backgroundColor: 'white', borderRadius: 15 }}>
                                 <TouchableOpacity onPress={() => {
-                                    Actions.newappointment({ userInfo: this.props.userInfo, groupInfo: this.props.groupInfo, currentRegion: this.props.currentRegion })
+                                    Actions.newappointment({
+                                        userInfo: this.props.userInfo,
+                                        groupInfo: this.props.groupInfo,
+                                        currentRegion: this.props.currentRegion
+                                    })
                                 }}>
                                     <Image
                                         style={{ width: 70, height: 70, margin: 10 }}
@@ -527,6 +548,50 @@ export default class RoomSetting extends Component {
 
 
                 </ScrollView>
+                <Modal
+                    animationType={"slide"}
+                    transparent={false}
+                    visible={this.state.modalVisible}
+                    onRequestClose={() => console.log('closed')}
+                >
+                    <View style={{ flex: 1 }}>
+                        <ToolbarAndroid
+                            style={{ height: 50, backgroundColor: MAIN_COLOR }}
+                            title='Chọn ảnh nhóm'
+                            titleColor='#6666ff'
+                            navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
+                            onIconClicked={this.toggleModal}
+                        >
+                        </ToolbarAndroid>
+                        <ScrollView
+                            contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}>
+                            {
+                                this.state.photos.map((p, i) => {
+                                    return (
+                                        <TouchableOpacity
+                                            style={{ opacity: i === this.state.index ? 0.5 : 1 }}
+                                            key={i}
+                                            underlayColor='transparent'
+                                            onPress={async () => {
+                                                let url = await apis.uploadImage(p.node.image.uri);
+                                                apis.updateGroupImage(url);
+                                                this.toggleModal();
+                                            }}
+                                        >
+                                            <Image
+                                                style={{
+                                                    width: width / 3,
+                                                    height: width / 3
+                                                }}
+                                                source={{ uri: p.node.image.uri }}
+                                            />
+                                        </TouchableOpacity>
+                                    )
+                                })
+                            }
+                        </ScrollView>
+                    </View>
+                </Modal>
             </View>
         );
     }

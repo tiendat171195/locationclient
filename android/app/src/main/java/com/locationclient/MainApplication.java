@@ -3,12 +3,13 @@ package com.locationclient;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
-import com.cmcewen.blurview.BlurViewPackage;
-import com.cboy.rn.splashscreen.SplashScreenReactPackage;
-import com.evollu.react.fcm.FIRMessagingPackage;
-import com.aakashns.reactnativedialogs.ReactNativeDialogsPackage;
 import com.oblador.vectoricons.VectorIconsPackage;
+import com.cboy.rn.splashscreen.SplashScreenReactPackage;
 import com.airbnb.android.react.maps.MapsPackage;
+import com.RNFetchBlob.RNFetchBlobPackage;
+import com.evollu.react.fcm.FIRMessagingPackage;
+import com.aakashns.reactnativedialogs.ReactNativeDialogsPackage;;
+import com.cmcewen.blurview.BlurViewPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
@@ -29,13 +30,13 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
-            
+            new VectorIconsPackage(),
             new SplashScreenReactPackage(),
+            new MapsPackage(),
+            new RNFetchBlobPackage(),
             new FIRMessagingPackage(),
             new ReactNativeDialogsPackage(),
-            new VectorIconsPackage(),
-            new MapsPackage(),
-			new BlurViewPackage()
+            new BlurViewPackage()
       );
     }
   };

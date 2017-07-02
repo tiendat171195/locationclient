@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     Slider,
     ToolbarAndroid,
+    ScrollView
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { Actions } from "react-native-router-flux";
@@ -25,6 +26,18 @@ const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 var giobalThis;
 var id = 1000;
+import {
+    CONTENT_COLOR,
+    CONTENT_TEXT_COLOR,
+    MAIN_FONT,
+    PLACEHOLDER_TEXT_COLOR,
+    CALLOUT_BACKGROUND_COLOR,
+    MAIN_COLOR
+} from './type.js';
+import {
+    START_MARKER,
+    END_MARKER,
+} from './images.js';
 // create a component
 class NewRoute extends Component {
     constructor(props) {
@@ -66,7 +79,7 @@ class NewRoute extends Component {
             + ' ngày '
             + startingDate.getDate()
             + '/'
-            + (1+startingDate.getMonth())
+            + (1 + startingDate.getMonth())
             + '/'
             + (1900 + startingDate.getYear());
         this.setState({
@@ -83,7 +96,7 @@ class NewRoute extends Component {
             + ' ngày '
             + endingDate.getDate()
             + '/'
-            + (1+endingDate.getMonth())
+            + (1 + endingDate.getMonth())
             + '/'
             + (1900 + endingDate.getYear());
         this.setState({
@@ -427,7 +440,7 @@ class NewRoute extends Component {
         return (
             <View style={{ flex: 1 }}>
                 <ToolbarAndroid
-                    style={{ height: 50, backgroundColor: 'sandybrown' }}
+                    style={{ height: 50, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title={'Cài đặt lộ trình'}
                     onIconClicked={() => { Actions.pop() }}
@@ -438,45 +451,56 @@ class NewRoute extends Component {
                             show: 'always'
                         }]}
                     onActionSelected={this.onActionSelected} />
-                <View style={{ padding: 5, flex: 1 }}>
-                    <View>
+                <ScrollView style={{ flex: 1, backgroundColor: 'silver' }}>
+                    <View style={{ backgroundColor: 'white', padding: 5 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 40, width: 40 }}
+                                style={{ height: 30, width: 30, marginRight: 5 }}
                                 source={{ uri: 'http://www.freeiconspng.com/uploads/schedule-icon-7.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Ngày bắt đầu:</Text>
                         </View>
-                        <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
-                            <TextInput editable={false}
-                                style={{ flex: 1, fontSize: 25, color: 'dimgray' }}>
-                                {this.state.start_date === null ? 'Chưa chọn thời gian bắt đầu' : '' + this.state.start_date_text}
-                            </TextInput>
-                            <Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
-                                onPress={this.showStartTimePicker}>
-                                Sửa
-                    </Text>
-                        </View>
+                        <Text
+                            style={{
+                                flex: 1,
+                                fontSize: 20,
+                                color: CONTENT_TEXT_COLOR,
+                                backgroundColor: CONTENT_COLOR,
+                                borderRadius: 10,
+                                paddingHorizontal: 10,
+                                padding: 5,
+                                marginTop: 3,
+                                marginHorizontal: 10
+                            }}
+                            onPress={this.showStartTimePicker.bind(this)}>
+                            {this.state.start_date === null ? 'Chưa chọn thời gian bắt đầu' : this.state.start_date_text}
+                        </Text>
                     </View>
 
-                    <View>
+                    <View style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 40, width: 40 }}
+                                style={{ height: 30, width: 30, marginRight: 5 }}
                                 source={{ uri: 'http://www.freeiconspng.com/uploads/schedule-icon-7.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Ngày kết thúc:</Text>
                         </View>
-                        <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
-                            <TextInput editable={false}
-                                style={{ flex: 1, fontSize: 25, color: 'dimgray' }}>
-                                {this.state.end_date === null ? 'Chưa chọn thời gian kết thúc' : '' + this.state.end_date_text}
-                            </TextInput><Text style={{ fontSize: 15, marginHorizontal: 5, textAlignVertical: 'center', color: 'blue' }}
-                                onPress={this.showEndTimePicker}>
-                                Sửa
-                    </Text>
-                        </View>
+                        <Text
+                            style={{
+                                flex: 1,
+                                fontSize: 20,
+                                color: CONTENT_TEXT_COLOR,
+                                backgroundColor: CONTENT_COLOR,
+                                borderRadius: 10,
+                                paddingHorizontal: 10,
+                                padding: 5,
+                                marginTop: 3,
+                                marginHorizontal: 10
+                            }}
+                            onPress={this.showEndTimePicker.bind(this)}>
+                            {this.state.end_date === null ? 'Chưa chọn thời gian kết thúc' : this.state.end_date_text}
+                        </Text>
                     </View>
 
-                    <View>
+                    <View style={{ backgroundColor: 'white', padding: 5, marginTop: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
                                 style={{ height: 40, width: 40 }}
@@ -484,18 +508,25 @@ class NewRoute extends Component {
                                 source={{ uri: 'http://www.kasal.com/images/site_assets/icon-address.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Lộ trình:</Text>
                         </View>
+
                         <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
                             <TextInput
-                                placeholder="Tìm địa điểm"
-                                style={{ flex: 1, fontSize: 25, color: 'dimgray' }}
-                                onChangeText={(text) => {
-                                    this.setState({
-                                        search_text: text
-                                    })
+                                placeholder="Nhập địa chỉ điểm hẹn"
+                                style={{
+                                    flex: 1,
+                                    fontSize: 20,
+                                    color: CONTENT_TEXT_COLOR,
+                                    backgroundColor: CONTENT_COLOR,
+                                    borderRadius: 10,
+                                    marginTop: 3,
+                                    paddingHorizontal: 10,
+                                    marginRight: 5,
+                                    marginLeft: 10
                                 }}
-                            >
-
-                            </TextInput>
+                                value={this.state.search_text}
+                                underlineColorAndroid='transparent'
+                                onChangeText={(text) => this.setState({ search_text: text })}
+                            />
                             <TouchableOpacity style={{ alignSelf: 'center' }} onPress={async () => {
                                 var marker = await this.getPointerInfo(this.state.search_text);
                                 this.refs.map.animateToRegion({
@@ -505,16 +536,18 @@ class NewRoute extends Component {
                                     longitudeDelta: LONGITUDE_DELTA
                                 }, 2000);
                             }}>
-                                <Text style={{ fontSize: 20, color: 'blue' }}>Tìm</Text>
+                                <Image
+                                    style={{ height: 30, width: 30 }}
+                                    source={{ uri: 'https://www.shareicon.net/download/2015/08/04/80098_find_512x512.png' }} />
                             </TouchableOpacity>
                         </View>
                     </View>
 
 
-                    <View style={{ flex: 1 }}>
+                    <View style={{ width: width, height: 250 }}>
                         <MapView
                             ref="map"
-                            style={{ ...StyleSheet.absoluteFillObject, flex: 1 }}
+                            style={{ flex: 1 }}
                             toolbarEnabled={false}
                             onPress={this.onMapPress}>
                             {
@@ -528,12 +561,12 @@ class NewRoute extends Component {
                                         <MapView.Callout
                                             style={{ width: 150 }}
                                             tooltip={true}>
-                                            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 15 }}>
-                                                <View style={{  }}>
-                                                <Text style={{color:'black', fontWeight: 'bold', fontSize: 20 }}>Điểm bắt đầu</Text>
+                                            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: CALLOUT_BACKGROUND_COLOR, borderRadius: 15 }}>
+                                                <View style={{}}>
+                                                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 20 }}>Điểm bắt đầu</Text>
                                                 </View>
-                                                <View style={{ marginHorizontal:5}}>
-                                                <Text style={{color:'black', fontStyle: 'italic', fontSize: 10 }}>{this.state.start_address}</Text>
+                                                <View style={{ marginHorizontal: 5 }}>
+                                                    <Text style={{ color: 'black', fontStyle: 'italic', fontSize: 10 }}>{this.state.start_address}</Text>
                                                 </View>
                                             </View>
                                         </MapView.Callout>
@@ -557,12 +590,12 @@ class NewRoute extends Component {
                                         <MapView.Callout
                                             style={{ width: 150 }}
                                             tooltip={true}>
-                                            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 15 }}>
+                                            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: CALLOUT_BACKGROUND_COLOR, borderRadius: 15 }}>
                                                 <View style={{ flex: 1 }}>
-                                                <Text style={{color:'black', fontWeight: 'bold', fontSize: 20 }}>Điểm kết thúc</Text>
+                                                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 20 }}>Điểm kết thúc</Text>
                                                 </View>
                                                 <View style={{ flex: 1 }}>
-                                                <Text style={{color:'black', fontStyle: 'italic', fontSize: 10 }}>{this.state.end_address}</Text>
+                                                    <Text style={{ color: 'black', fontStyle: 'italic', fontSize: 10 }}>{this.state.end_address}</Text>
                                                 </View>
                                             </View>
                                         </MapView.Callout>
@@ -579,34 +612,30 @@ class NewRoute extends Component {
                                 return (
                                     <MapView.Marker
                                         title='Điểm dừng chân'
+                                        description={u.address}
                                         key={id++}
                                         coordinate={u.coordinate}>
-                                        <View>
+                                        <View style={{height: 48, width: 48}}>
                                             <Image
-                                                source={{ uri: 'http://www.starproperty.my/wp-content/themes/Bones/library/images/icon/starproperty-fb-marker.png' }}
+                                                source={START_MARKER}
                                                 style={{ height: 48, width: 48 }}
                                             />
                                         </View>
-                                        <MapView.Circle
-                                            center={u.coordinate}
-                                            radius={u.radius}
-                                            fillColor='sandybrown'
-                                            strokeWidth={1}
-                                        />
                                         <MapView.Callout
                                             style={{ width: 150 }}
                                             tooltip={true}>
-                                            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 20 }}>
+                                            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: CALLOUT_BACKGROUND_COLOR, borderRadius: 20 }}>
                                                 <View style={{}}>
-                                                    <Text style={{color:'black', fontWeight: 'bold', fontSize: 20 }}>Điểm dừng chân</Text>
+                                                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 20 }}>Điểm dừng chân</Text>
                                                 </View>
-                                                <View style={{marginHorizontal:3 }}>
+                                                <View style={{ marginHorizontal: 3 }}>
                                                     <Text
-                                                     
-                                                     style={{color:'black', fontStyle: 'italic', fontSize: 10 }}>{u.address}</Text>
+
+                                                        style={{ color: 'black', fontStyle: 'italic', fontSize: 10 }}>{u.address}</Text>
                                                 </View>
                                             </View>
                                         </MapView.Callout>
+
                                     </MapView.Marker>)
                             })}
                             <MapView.Polyline
@@ -644,7 +673,7 @@ class NewRoute extends Component {
                                 style={{ margin: 10 }} />
                         </View>
                     </View>
-                </View>
+                </ScrollView>
             </View>
         );
     }

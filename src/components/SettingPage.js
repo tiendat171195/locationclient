@@ -10,7 +10,9 @@ import {
 	Image,
 	AsyncStorage,
 	ToolbarAndroid,
-	StyleSheet
+	StyleSheet,
+	CameraRoll,
+	Modal,
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 import FriendsList from './FriendsList.js';
@@ -28,9 +30,11 @@ import {
 	NGAYSINH_IMG,
 	LOGOUT_IMG,
 	BACKGROUND_COVER,
-	
-} from './images.js';
 
+} from './images.js';
+import {
+	MAIN_COLOR
+} from './type.js';
 
 const ASPECT_RATIO = width / height;
 export default class SettingPage extends Component {
@@ -39,9 +43,22 @@ export default class SettingPage extends Component {
 		this.state = {
 			trueSwitchIsOn: true,
 			falseSwitchIsOn: false,
-			birthday_text:'',
+			birthday_text: '',
+			modalVisible: false,
+			photos: [],
 		};
 		this.SignOut = this.SignOut.bind(this);
+	}
+	getPhotos = () => {
+		console.log('get photo');
+		CameraRoll.getPhotos({
+			first: 100,
+			assetType: 'All'
+		})
+			.then(r => this.setState({ photos: r.edges }));
+	}
+	toggleModal = () => {
+		this.setState({ modalVisible: !this.state.modalVisible });
 	}
 	async SignOut() {
 		let responseAPI = await apis.SignOut();
@@ -60,20 +77,20 @@ export default class SettingPage extends Component {
 		this.convertBirthday();
 	}
 	convertBirthday() {
-		if(this.props.userInfo == undefined) return;
-        let birthday = new Date(this.props.userInfo.birthday);
-        this.state.birthday_text = '';
-        let tempText = '';
-        tempText =
-            + birthday.getDate()
-            + '/'
-            + (1+birthday.getMonth())
-            + '/'
-            + (1900 + birthday.getYear());
-        this.setState({
-            birthday_text: tempText
-        })
-    }
+		if (this.props.userInfo == undefined) return;
+		let birthday = new Date(this.props.userInfo.birthday);
+		this.state.birthday_text = '';
+		let tempText = '';
+		tempText =
+			+ birthday.getDate()
+			+ '/'
+			+ (1 + birthday.getMonth())
+			+ '/'
+			+ (1900 + birthday.getYear());
+		this.setState({
+			birthday_text: tempText
+		})
+	}
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
@@ -82,33 +99,37 @@ export default class SettingPage extends Component {
 					parallaxHeaderHeight={height / 3}
 					backgroundColor='white'
 					renderBackground={() => (
-						<View style={{backgroundColor: 'orange', width: width, height: height / 3 }}>
+						<View style={{ backgroundColor: 'orange', width: width, height: height / 3 }}>
 							<Image
-							style={{width: width, height: height / 3}}
+								style={{ width: width, height: height / 3 }}
 								resizeMode="stretch"
 								source={BACKGROUND_COVER} />
 						</View>
 					)}
 					renderForeground={() => (
-						<View style={{height:height/3, flexDirection:'column', justifyContent:'flex-end'}}>
-						<View style={{flexDirection:'row'}}>
-							<TouchableOpacity
-								style={{}}
-								onPress={() => { console.log('Onpress') }}
-								activeOpacity={0.6}>
-								<Image
-									style={{
-										margin: 5,
-										width: width / 4,
-										height: width / 4,
-										borderRadius: width / 8
+						<View style={{ height: height / 3, flexDirection: 'column', justifyContent: 'flex-end' }}>
+							<View style={{ flexDirection: 'row' }}>
+								<TouchableOpacity
+									style={{ backgroundColor: 'white', margin: 5, borderRadius: (width / 4 + 100) / 2 }}
+									onPress={() => {
+										this.toggleModal();
+										this.getPhotos();
 									}}
-									resizeMode="cover"
-									source={{ uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7" }}
-								/>
-							</TouchableOpacity>
-							<Text style={{fontSize: 30, alignSelf:'flex-end', color:'white'}}>{this.props.userInfo.username}</Text>
-						</View>
+									activeOpacity={0.6}>
+									<Image
+										style={{
+
+											margin: 3,
+											width: width / 4,
+											height: width / 4,
+											borderRadius: width / 8
+										}}
+										resizeMode="cover"
+										source={{ uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7" }}
+									/>
+								</TouchableOpacity>
+								<Text style={{ fontSize: 30, alignSelf: 'flex-end', color: 'white' }}>{this.props.userInfo.username}</Text>
+							</View>
 						</View>
 					)}>
 					<Card containerStyle={{ margin: 0, padding: 0 }} >
@@ -188,9 +209,53 @@ export default class SettingPage extends Component {
 									hideChevron={true}
 									avatar={LOGOUT_IMG}
 									onPress={this.SignOut} />
+
 							</View>
 						}
 					</Card>
+					<Modal
+						animationType={"slide"}
+						transparent={false}
+						visible={this.state.modalVisible}
+						onRequestClose={() => console.log('closed')}
+					>
+						<View style={{ flex: 1 }}>
+							<ToolbarAndroid
+								style={{ height: 50, backgroundColor: MAIN_COLOR }}
+								title='Chọn ảnh đại diện'
+								titleColor='#6666ff'
+								navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
+								onIconClicked={this.toggleModal}
+							>
+							</ToolbarAndroid>
+							<ScrollView
+								contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}>
+								{
+									this.state.photos.map((p, i) => {
+										return (
+											<TouchableOpacity
+												style={{ opacity: i === this.state.index ? 0.5 : 1 }}
+												key={i}
+												underlayColor='transparent'
+												onPress={async () => {
+													let url = await apis.uploadImage(p.node.image.uri);
+
+													}}
+											>
+												<Image
+													style={{
+														width: width / 3,
+														height: width / 3
+													}}
+													source={{ uri: p.node.image.uri }}
+												/>
+											</TouchableOpacity>
+										)
+									})
+								}
+							</ScrollView>
+						</View>
+					</Modal>
 				</ParallaxScrollView>
 
 			</View>
