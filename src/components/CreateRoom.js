@@ -105,7 +105,7 @@ class CreateRoom extends Component {
                                         key={i}
                                         roundAvatar
                                         hideChevron={true}
-                                        title={friend.name}
+                                        title={friend.username}
                                         titleStyle={{ fontSize: 25 }}
                                         rightTitle={
                                             <TouchableOpacity onPress={() => {
@@ -119,7 +119,7 @@ class CreateRoom extends Component {
                                             </TouchableOpacity>
                                         }
                                         avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
-                                        avatar={{ uri: friend.avatar }}
+                                        avatar={{ uri: friend.avatar_url }}
                                         onPress={() => console.log('Clicked')} />
                                 )
                             })
@@ -133,7 +133,7 @@ class CreateRoom extends Component {
                                         key={i}
                                         roundAvatar
                                         hideChevron={true}
-                                        title={friend.name}
+                                        title={friend.username}
                                         titleStyle={{ fontSize: 25 }}
                                         rightTitle={
                                             <TouchableOpacity onPress={() => {
@@ -147,17 +147,21 @@ class CreateRoom extends Component {
                                             </TouchableOpacity>
                                         }
                                         avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
-                                        avatar={{ uri: friend.avatar }}
+                                        avatar={{ uri: friend.avatar_url }}
                                         onPress={() => console.log('Clicked')} />
                                 )
                             })
                         }
                     </Card>
+                    <View
+                        style={{alignSelf:'center', marginBottom: 50, marginTop:10, width:200 }}>
                     <Button
+                        
                         onPress={() => { this.CreateNewRoom(this.state.newRoomName) }}
                         title="Tạo"
                         color="#841584"
                     />
+                    </View>
                 </ScrollView>
             </View>
         );

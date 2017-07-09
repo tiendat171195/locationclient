@@ -24,7 +24,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Card, ListItem, Button } from 'react-native-elements';
 
 import { connect } from 'react-redux';
-import { getRooms, getFriends } from '../actions';
+import { getRooms, getFriends, getUserInfo } from '../actions';
 import {
 	DEFAULT_ROOM_AVATAR
 } from './images.js';
@@ -47,14 +47,13 @@ class ChatRoomsPage extends Component {
 
 
 	componentWillMount() {
-		this.props.getFriends();
 		this.props.getRooms();
 		this.getRoomsRequest();
 	}
 
 	_onRefresh() {
 
-		this.props.getFriends();
+		this.props.getUserInfo(this.props.userInfo.user_id);
 		this.props.getRooms();
 		this.setState({ isRefreshing: true });
 	}
@@ -92,12 +91,12 @@ class ChatRoomsPage extends Component {
 		if (!this.props.getRoomsResponse.fetched && nextProps.getRoomsResponse.fetched) {
 
 		}
-		if (!this.props.getFriendsResponse.fetched && nextProps.getFriendsResponse.fetched) {
-			//console.log('componentWillReceiveProps chatroom');
-			//console.log(nextProps);
-			this.setState({ dataFriendsSource: ds.cloneWithRows(nextProps.friendsList) });
+		if(!this.props.getUserInfoResponse.fetched && nextProps.getUserInfoResponse.fetched){
+			this.setState({
+				dataFriendsSource: ds.cloneWithRows(nextProps.getUserInfoResponse.data.friends)
+			})
 		}
-		if (nextProps.getFriendsResponse.fetched && nextProps.getRoomsResponse.fetched) {
+		if (nextProps.getUserInfoResponse.fetched && nextProps.getRoomsResponse.fetched) {
 			this.setState({ isRefreshing: false });
 		}
 
@@ -115,7 +114,7 @@ class ChatRoomsPage extends Component {
 						colors={['#ff0000', '#00ff00', '#0000ff']}
 						progressBackgroundColor={MAIN_COLOR}
 					/>}>
-					{this.props.friendsList != undefined && this.props.friendsList.length > 0 && <View style={{}}>
+					{ this.props.getUserInfoResponse.data.friends != undefined && this.props.getUserInfoResponse.data.friends.length > 0 && <View style={{}}>
 						<View style={{ paddingLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
 							<Image
 								style={{ height: 30, width: 30 }}
@@ -130,13 +129,13 @@ class ChatRoomsPage extends Component {
 							style={{}}
 							dataSource={this.state.dataFriendsSource}
 							renderRow={(data) =>
-								<View style={{ flexDirection: 'column', alignItems: 'center', margin: 5 }}>
+								<View style={{width:70, flexDirection: 'column', alignItems: 'center', margin: 5 }}>
 									<Image
-										style={{ width: 70, height: 70, alignSelf: "center", borderRadius: 70 / 2 }}
+										style={{ width: 50, height: 50, alignSelf: "center", borderRadius: 70 / 2 }}
 										resizeMode="cover"
-										source={{ uri: data.avatar }}
+										source={{ uri: data.avatar_url }}
 									/>
-									<Text style={{ fontSize: 20 }}>{data.name}</Text>
+									<Text style={{ fontSize: 20, color:'black' }} numberOfLines={1}>{data.username}</Text>
 								</View>}
 						/>
 					</View>}
@@ -146,12 +145,10 @@ class ChatRoomsPage extends Component {
 							this.props.roomsList != undefined && this.props.roomsList.map((u, i) => {
 								return (
 									<ListItem
-										containerStyle={{ height: 70 }}
 										title={
 											<Text style={{
-												height: 35,
-												paddingLeft: 10,
-												fontSize: 20,
+												
+												fontSize: 18,
 												color: 'black',
 												textAlignVertical: 'center',
 												fontFamily: 'sans-serif',
@@ -162,17 +159,13 @@ class ChatRoomsPage extends Component {
 											</Text>}
 										subtitle={
 											<Text style={{
-												height: 35,
-												paddingLeft: 10,
-												fontSize: 15,
-												textAlignVertical: 'top',
+												fontSize: 14,
 												fontFamily: 'sans-serif'
 											}}
 												numberOfLines={1}>
 												{u.messages.length > 0 ? u.messages[0].chatter.username + ': ' + u.messages[0].content
 													: "Hãy gửi tin nhắn đầu tiên"}
 											</Text>}
-										avatarStyle={{ height: 60, width: 60, borderRadius: 30 }}
 										key={i}
 										roundAvatar
 										hideChevron={true}
@@ -182,9 +175,6 @@ class ChatRoomsPage extends Component {
 											Actions.chatroom({
 												"groupInfo": u,
 												'userInfo': this.props.userInfo,
-												'currentRegion': this.props.currentRegion,
-												appointments: this.props.appointments.find(obj => obj.group_id == u._id).appointments,
-												route: this.props.routes.find(obj => obj.group_id == u._id),
 											})
 										}} />
 								)
@@ -209,7 +199,7 @@ class ChatRoomsPage extends Component {
 												roundAvatar
 												hideChevron={true}
 												title={request.name}
-												titleStyle={{ fontSize: 25 }}
+												titleStyle={{ fontSize: 18 }}
 												avatar={request.avatar}
 												avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
 												rightTitle={
@@ -238,7 +228,7 @@ class ChatRoomsPage extends Component {
 						</View>}
 				</ScrollView>
 				<ActionButton buttonColor="rgba(231,76,60,1)">
-					<ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={() => { Actions.createroom({ 'userInfo': this.props.userInfo, 'friendsList': this.props.friendsList }) }}>
+					<ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={() => { Actions.createroom({ 'userInfo': this.props.userInfo, 'friendsList': this.props.getUserInfoResponse.data.friends }) }}>
 						<Icon name="md-create" />
 					</ActionButton.Item>
 
@@ -251,14 +241,14 @@ class ChatRoomsPage extends Component {
 function mapStateToProps(state) {
 	return {
 		getRoomsResponse: state.getRoomsResponse,
-		getFriendsResponse: state.getFriendsResponse
+		getUserInfoResponse: state.getUserInfoResponse
 	}
 }
 
 function mapDispatchToProps(dispatch) {
 	return {
 		getRooms: () => dispatch(getRooms()),
-		getFriends: () => dispatch(getFriends())
+		getUserInfo: (UserID) => dispatch(getUserInfo(UserID))
 	}
 }
 

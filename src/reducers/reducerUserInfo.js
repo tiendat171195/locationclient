@@ -1,4 +1,4 @@
-import {  FETCHING_ROOMS, FETCHING_ROOMS_SUCCESS, FETCHING_ROOMS_FAILURE  } from "../actions/actionTypes.js";
+import {  FETCHING_USERINFO, FETCHING_USERINFO_SUCCESS, FETCHING_USERINFO_FAILURE  } from "../actions/actionTypes.js";
 
 const initialState = {
     data: {},
@@ -9,20 +9,21 @@ const initialState = {
 
 export default function dataReducer(state = initialState, action) {
     switch (action.type) {
-        case FETCHING_ROOMS:
+        case FETCHING_USERINFO:
             return {
                 ...state,
-                fetched:false,
-                isFetching: true
+                data:{},
+                isFetching: true,
+                fetched: false
             }
-            case FETCHING_ROOMS_SUCCESS:
+            case FETCHING_USERINFO_SUCCESS:
             return {
                 ...state,
                 isFetching: false,
                 fetched: true,
                 data: action.data
             }
-            case FETCHING_ROOMS_FAILURE:
+            case FETCHING_USERINFO_FAILURE:
             return {
                 ...state,
                 isFetching: false,

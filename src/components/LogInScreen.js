@@ -42,6 +42,7 @@ export default class Login extends Component {
 		};
 	}
 	componentWillMount() {
+		console.log('login');
 		//Handle Back Android
 		/*BackAndroid.addEventListener("hardwareBackPress", () => {
 			if (Actions.length > 1) {
@@ -58,8 +59,6 @@ export default class Login extends Component {
 		if (responseAPI == null) {
 			return;
 		}
-		console.log(responseAPI);
-
 		if (!responseAPI.hasOwnProperty('success')) {
 			try {
 				await AsyncStorage.setItem('LOGGED_IN', 'true');
@@ -73,7 +72,6 @@ export default class Login extends Component {
 				console.error(error);
 			}
 			apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
-			console.log(responseAPI);
 			Actions.mainscreen({
 				'userInfo': responseAPI
 			});

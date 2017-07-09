@@ -253,6 +253,9 @@ var apis = {
 					})
 				});
 			let responseJson = await response.json();
+			console.log(friendId);
+			console.log('decline');
+			console.log(responseJson);
 			return responseJson;
 		}
 		catch (error) {
@@ -545,7 +548,7 @@ var apis = {
 	},
 	async updateUserImage(imageUrl){
 		try {
-			let response = await fetch(SERVER_PATH + 'user/avatar/',
+			let response = await fetch(SERVER_PATH + 'users/avatar/',
 				{
 					method: "POST",
 					headers: {
@@ -580,13 +583,78 @@ var apis = {
 					})
 				});
 			let responseJson = await response.json();
-			console.log(responseJson);
 			return responseJson;
 		}
 		catch (error) {
 			console.error(error);
 			return null;
 		}
+	},
+	async getUserInfo(UserID){
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'users/' + UserID + '/',
+					{
+						method: "GET",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				reject.error(error);
+				return null;
+			}
+		})
+	},
+	async getNotifications(){
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'notification/',
+					{
+						method: "GET",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				reject.error(error);
+				return null;
+			}
+		})
+	},
+	async getFriendChatId(friendId){
+		return new Promise(async (resolve, reject) => {
+			try {
+				let response = await fetch(SERVER_PATH + 'notification/',
+					{
+						method: "GET",
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+							'token': token,
+							//'user_id': user_id,
+						}
+					});
+				let responseJson = await response.json();
+				return resolve(responseJson);
+			}
+			catch (error) {
+				reject.error(error);
+				return null;
+			}
+		})
 	}
 };
 module.exports = apis;

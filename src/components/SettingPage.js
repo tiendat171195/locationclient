@@ -35,17 +35,24 @@ import {
 import {
 	MAIN_COLOR
 } from './type.js';
-
+import { connect } from 'react-redux';
+import {
+	getUserInfo,
+} from '../actions';
 const ASPECT_RATIO = width / height;
-export default class SettingPage extends Component {
+
+var giobalThis;
+class SettingPage extends Component {
 	constructor(props) {
 		super(props);
+		giobalThis = this;
 		this.state = {
 			trueSwitchIsOn: true,
 			falseSwitchIsOn: false,
 			birthday_text: '',
 			modalVisible: false,
 			photos: [],
+			avatar: null,
 		};
 		this.SignOut = this.SignOut.bind(this);
 	}
@@ -74,11 +81,10 @@ export default class SettingPage extends Component {
 		Actions.pop();
 	}
 	componentWillMount() {
-		this.convertBirthday();
+		this.convertBirthday(this.props.getUserInfoResponse.data.birthday);
 	}
-	convertBirthday() {
-		if (this.props.userInfo == undefined) return;
-		let birthday = new Date(this.props.userInfo.birthday);
+	convertBirthday(BD) {
+		let birthday = new Date(BD);
 		this.state.birthday_text = '';
 		let tempText = '';
 		tempText =
@@ -91,26 +97,32 @@ export default class SettingPage extends Component {
 			birthday_text: tempText
 		})
 	}
+	componentWillReceiveProps(nextProps){
+		console.log('Setting Screen');
+		if(nextProps.getUserInfoResponse.fetched){
+			this.setState({avatar: nextProps.getUserInfoResponse.data.avatar_url});
+			giobalThis.convertBirthday(nextProps.getUserInfoResponse.data.birthday);
+		}
+	}
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
-
 				<ParallaxScrollView
-					parallaxHeaderHeight={height / 3}
+					parallaxHeaderHeight={width*9/16}
 					backgroundColor='white'
 					renderBackground={() => (
-						<View style={{ backgroundColor: 'orange', width: width, height: height / 3 }}>
+						<View style={{ backgroundColor: 'orange', width: width, height: width*9/16 }}>
 							<Image
-								style={{ width: width, height: height / 3 }}
-								resizeMode="stretch"
+								style={{ width: width, height: width*9/16 }}
+								resizeMode="cover"
 								source={BACKGROUND_COVER} />
 						</View>
 					)}
 					renderForeground={() => (
-						<View style={{ height: height / 3, flexDirection: 'column', justifyContent: 'flex-end' }}>
+						<View style={{ height: width*9/16, flexDirection: 'column', justifyContent: 'flex-end' }}>
 							<View style={{ flexDirection: 'row' }}>
 								<TouchableOpacity
-									style={{ backgroundColor: 'white', margin: 5, borderRadius: (width / 4 + 100) / 2 }}
+									style={{ backgroundColor: 'white', height:width/4+6, width:width/4+6, padding: 3, margin:5, borderRadius: (width / 4) / 2, justifyContent:'center', alignItems:'center' }}
 									onPress={() => {
 										this.toggleModal();
 										this.getPhotos();
@@ -125,10 +137,10 @@ export default class SettingPage extends Component {
 											borderRadius: width / 8
 										}}
 										resizeMode="cover"
-										source={{ uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-1/p160x160/16388040_1019171961520719_4744401854953494000_n.jpg?oh=a5294f7473787e86beb850562f89d547&oe=599332F7" }}
+										source={{ uri: this.state.avatar }}
 									/>
 								</TouchableOpacity>
-								<Text style={{ fontSize: 30, alignSelf: 'flex-end', color: 'white' }}>{this.props.userInfo.username}</Text>
+								<Text style={{ fontSize: 30, alignSelf: 'flex-end', color: 'white' }}>{this.props.getUserInfoResponse.data.username}</Text>
 							</View>
 						</View>
 					)}>
@@ -136,12 +148,11 @@ export default class SettingPage extends Component {
 						{
 							<View>
 								<ListItem
-									containerStyle={{ height: 60, padding: 5, alignItems: 'center' }}
+									
 									title='Ngày sinh'
-									titleStyle={{ fontSize: 20 }}
+									titleStyle={{ fontSize: 18 }}
 									subtitle={this.state.birthday_text}
-									subtitleStyle={{ fontSize: 20, paddingLeft: 10 }}
-									avatarStyle={{ height: 40, width: 40, borderRadius: 20 }}
+									subtitleStyle={{ fontSize: 18 }}
 									roundAvatar
 									hideChevron={true}
 									avatar={NGAYSINH_IMG}
@@ -149,12 +160,12 @@ export default class SettingPage extends Component {
 
 									}} />
 								<ListItem
-									containerStyle={{ height: 60, padding: 5, alignItems: 'center' }}
+									
 									title='Số điện thoại'
-									titleStyle={{ fontSize: 20 }}
-									subtitle={this.props.userInfo.phone}
-									subtitleStyle={{ fontSize: 20, paddingLeft: 10 }}
-									avatarStyle={{ height: 40, width: 40, borderRadius: 20 }}
+									titleStyle={{ fontSize: 18 }}
+									subtitle={this.props.getUserInfoResponse.data.phone}
+									subtitleStyle={{ fontSize: 18 }}
+									
 									roundAvatar
 									hideChevron={true}
 									avatar={DIENTHOAI_IMG}
@@ -162,12 +173,12 @@ export default class SettingPage extends Component {
 
 									}} />
 								<ListItem
-									containerStyle={{ height: 60, padding: 5, alignItems: 'center' }}
+									
 									title='Email'
-									titleStyle={{ fontSize: 20 }}
-									subtitle={this.props.userInfo.email}
-									subtitleStyle={{ fontSize: 20, paddingLeft: 10 }}
-									avatarStyle={{ height: 40, width: 40, borderRadius: 20 }}
+									titleStyle={{ fontSize: 18 }}
+									subtitle={this.props.getUserInfoResponse.data.email}
+									subtitleStyle={{ fontSize: 18 }}
+									
 									roundAvatar
 									hideChevron={true}
 									avatar={EMAIL_IMG}
@@ -175,12 +186,12 @@ export default class SettingPage extends Component {
 
 									}} />
 								<ListItem
-									containerStyle={{ height: 60, padding: 5, alignItems: 'center' }}
+									
 									title='Giới tính'
-									titleStyle={{ fontSize: 20 }}
-									subtitle={this.props.userInfo.gender}
-									subtitleStyle={{ fontSize: 20, paddingLeft: 10 }}
-									avatarStyle={{ height: 40, width: 40, borderRadius: 20 }}
+									titleStyle={{ fontSize: 18 }}
+									subtitle={this.props.getUserInfoResponse.data.gender}
+									subtitleStyle={{ fontSize: 18 }}
+									
 									roundAvatar
 									hideChevron={true}
 									avatar={GIOITINH_IMG}
@@ -188,12 +199,12 @@ export default class SettingPage extends Component {
 
 									}} />
 								<ListItem
-									containerStyle={{ height: 60, padding: 5, alignItems: 'center' }}
+									
 									title='Địa chỉ'
-									titleStyle={{ fontSize: 20 }}
-									subtitle={this.props.userInfo.city}
-									subtitleStyle={{ fontSize: 20, paddingLeft: 10 }}
-									avatarStyle={{ height: 40, width: 40, borderRadius: 20 }}
+									titleStyle={{ fontSize: 18 }}
+									subtitle={this.props.getUserInfoResponse.data.city}
+									subtitleStyle={{ fontSize: 18 }}
+									
 									roundAvatar
 									hideChevron={true}
 									avatar={DIACHI_IMG}
@@ -201,10 +212,10 @@ export default class SettingPage extends Component {
 
 									}} />
 								<ListItem
-									containerStyle={{ height: 60, padding: 5, alignItems: 'center' }}
+									
 									title='Đăng xuất'
-									titleStyle={{ fontSize: 20 }}
-									avatarStyle={{ height: 40, width: 40, borderRadius: 20 }}
+									titleStyle={{ fontSize: 18 }}
+									
 									roundAvatar
 									hideChevron={true}
 									avatar={LOGOUT_IMG}
@@ -239,7 +250,15 @@ export default class SettingPage extends Component {
 												underlayColor='transparent'
 												onPress={async () => {
 													let url = await apis.uploadImage(p.node.image.uri);
-
+													this.toggleModal();
+													let response = await apis.updateUserImage(url);
+													
+													if(response.status_code == 200){
+														this.setState({
+															avatar: url
+														})
+													}
+													
 													}}
 											>
 												<Image
@@ -262,3 +281,20 @@ export default class SettingPage extends Component {
 		);
 	}
 }
+
+function mapStateToProps(state) {
+	return {
+		getUserInfoResponse: state.getUserInfoResponse,
+	}
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+		getUserInfo: (UserID) => dispatch(getUserInfo(UserID)),
+	}
+}
+
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(SettingPage);

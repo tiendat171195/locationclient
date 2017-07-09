@@ -19,9 +19,10 @@ import { Card, ListItem } from 'react-native-elements';
 import apis from '../apis/api.js';
 
 import { connect } from 'react-redux';
-import { getFriends } from '../actions';
+import { getUserInfo } from '../actions';
 import {
-	ACTIONBUTTON_COLOR
+	ACTIONBUTTON_COLOR,
+	MAIN_COLOR_DARK
 } from './type.js';
 import {
 	DEFAULT_AVATAR,
@@ -31,18 +32,16 @@ class FriendsList extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			friends_list: [],
-			friends_request_list: [],
 			isRefreshing: false
 		}
 		this.onActionSelected = this.onActionSelected.bind(this);
 	}
 	componentWillMount() {
-		this.getFriendRequestList();
 
 	}
 	componentWillReceiveProps(nextProps) {
-		if (!this.props.getFriendsResponse.fetched && nextProps.getFriendsResponse.fetched) {
+		if (!this.props.getUserInfoResponse.fetched && nextProps.getUserInfoResponse.fetched) {
+			
 		}
 	}
 	chatWithFriend(userID){
@@ -66,20 +65,6 @@ class FriendsList extends Component {
 		});
 		dialog.show();
 	}
-	async getFriendRequestList() {
-		let responseAPI = await apis.getFriendsRequestList();
-		this.state.friends_request_list = [];
-		console.log('responseAPI.friend_requests');
-		console.log(responseAPI.friend_requests);
-		for (var i = responseAPI.friend_requests.length - 1; i >= 0; i--) {
-			this.state.friends_request_list.push({
-				"_id": responseAPI.friend_requests[i]._id,
-				'name': responseAPI.friend_requests[i].username,
-				'avatar': DEFAULT_AVATAR
-			});
-		};
-		this.forceUpdate();
-	}
 	async addNewFriend(friendId) {
 		try {
 			let responseAPI = await apis.addNewFriend(friendId);
@@ -102,9 +87,9 @@ class FriendsList extends Component {
 			console.error(error);
 		}
 	}
-	async declineFriendRequest(groupID){
+	async declineFriendRequest(friendID){
 		try {
-			let responseAPI = await apis.declineFriendRequest(groupID);
+			let responseAPI = await apis.declineFriendRequest(friendID);
 		}
 		catch (error) {
 			console.error(error);
@@ -122,13 +107,10 @@ class FriendsList extends Component {
 				break;
 		}
 	}
-	_onRefresh() {
+	async _onRefresh() {
 		this.setState({ isRefreshing: true });
-		setTimeout(() => {
-			this.props.getFriends();
-			this.setState({ isRefreshing: false });
-		}, 2000);
-
+		await this.props.getUserInfo(this.props.userInfo.user_id);
+		this.setState({ isRefreshing: false });
 	}
 	render() {
 		return (
@@ -145,31 +127,30 @@ class FriendsList extends Component {
 					/>}>
 					<Card containerStyle={{ margin: 0, padding: 0 }} >
 						{
-							this.props.friendsList != undefined && this.props.friendsList.map((friend, i) => {
+							this.props.getUserInfoResponse.data.friends !== undefined && this.props.getUserInfoResponse.data.friends.map((friend, i) => {
 								return (
 									<ListItem
 										key={i}
 										roundAvatar
 										hideChevron={true}
-										title={friend.name}
-										titleStyle={{ fontSize: 25 }}
+										title={friend.username}
+										titleStyle={{ fontSize: 22 }}
 										rightTitle={
 											<TouchableOpacity>
 											<Image
 												resizeMode='contain'
-												style={{height:40, width:40}}
+												style={{height:28, width:28}}
 												source={CHATBOX} />
 											</TouchableOpacity>
 										}
-										avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
-										avatar={{ uri: friend.avatar }}
+										avatar={{ uri: friend.avatar_url }}
 										onPress={() => console.log('Clicked')} />
 								)
 							})
 						}
 					</Card>
 					{
-						this.state.friends_request_list.length > 0 &&
+						(this.props.getUserInfoResponse.data.friend_requests !== undefined && this.props.getUserInfoResponse.data.friend_requests.length > 0) &&
 						<View>
 							<View style={{paddingLeft: 10,flexDirection: 'row', alignItems:'center'}}>
 							<Image
@@ -179,31 +160,34 @@ class FriendsList extends Component {
 							</View>
 							<Card containerStyle={{ margin: 0, padding: 0 }} >
 								{
-									this.state.friends_request_list.map((request, i) => {
+									this.props.getUserInfoResponse.data.friend_requests.map((request, i) => {
 										return (
 											<ListItem
 												key={request._id}
 												roundAvatar
 												hideChevron={true}
-												title={request.name}
-												titleStyle={{ fontSize: 25 }}
-												avatar={request.avatar}
-												avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
+												title={request.username}
+												titleStyle={{ fontSize: 22 }}
+												avatar={request.avatar_url}
 												rightTitle={
 													<View style={{ flexDirection: 'row' }}>
-														<TouchableOpacity onPress={() => {
-															this.state.friends_request_list.splice(i, 1);
+														<TouchableOpacity
+															style={{alignItems:'center', backgroundColor:MAIN_COLOR_DARK,padding: 5, margin: 3, height: 28, width: 90, borderRadius: 5,}}
+															onPress={() => {
+															this.props.getUserInfoResponse.data.friend_requests.splice(i, 1);
 															this.acceptFriend(request._id);
 															this.forceUpdate();
 														}}>
-															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, padding: 5, margin: 3, height: 35, width: 90, borderRadius: 5, color: 'white', backgroundColor: 'blue' }}>Xác nhận</Text>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15,  color: 'white'}}>Xác nhận</Text>
 														</TouchableOpacity>
-														<TouchableOpacity onPress={() => {
-															this.state.friends_request_list.splice(i, 1);
-															//Call remove friend request api here...
+														<TouchableOpacity 
+															style={{backgroundColor:'grey',padding: 5, margin: 3, height: 28, width: 90, borderRadius: 5,}}
+															onPress={() => {
+															this.props.getUserInfoResponse.data.friend_requests.splice(i, 1);
+															this.declineFriendRequest(request._id);
 															this.forceUpdate();
 														}}>
-															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, padding: 5, margin: 3, height: 35, width: 90, borderRadius: 5, color: 'white', backgroundColor: 'grey' }}>Từ chối</Text>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, color: 'white'}}>Từ chối</Text>
 														</TouchableOpacity>
 													</View>
 												}
@@ -230,13 +214,13 @@ class FriendsList extends Component {
 
 function mapStateToProps(state) {
 	return {
-		getFriendsResponse: state.getFriendsResponse
+		getUserInfoResponse: state.getUserInfoResponse
 	}
 }
 
 function mapDispatchToProps(dispatch) {
 	return {
-		getFriends: () => dispatch(getFriends())
+		getUserInfo: (UserID) => dispatch(getUserInfo(UserID))
 	}
 }
 

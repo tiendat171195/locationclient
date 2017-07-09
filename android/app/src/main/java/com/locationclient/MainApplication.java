@@ -8,8 +8,7 @@ import com.cboy.rn.splashscreen.SplashScreenReactPackage;
 import com.airbnb.android.react.maps.MapsPackage;
 import com.RNFetchBlob.RNFetchBlobPackage;
 import com.evollu.react.fcm.FIRMessagingPackage;
-import com.aakashns.reactnativedialogs.ReactNativeDialogsPackage;;
-import com.cmcewen.blurview.BlurViewPackage;
+import com.aakashns.reactnativedialogs.ReactNativeDialogsPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
@@ -35,8 +34,7 @@ public class MainApplication extends Application implements ReactApplication {
             new MapsPackage(),
             new RNFetchBlobPackage(),
             new FIRMessagingPackage(),
-            new ReactNativeDialogsPackage(),
-            new BlurViewPackage()
+            new ReactNativeDialogsPackage()
       );
     }
   };

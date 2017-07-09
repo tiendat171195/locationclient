@@ -17,7 +17,8 @@ import apis from '../apis/api.js';
 import RoomSetting from './RoomSetting.js';
 import {
 	SERVER_PATH,
-	MAIN_COLOR
+	MAIN_COLOR,
+	TOOLBAR_HEIGHT
 } from './type.js';
 var myThis;
 let id = 99999999;
@@ -143,9 +144,7 @@ export default class ChatRoom extends Component {
 			case 0:
 				Actions.roomsetting({ "userInfo": this.props.userInfo, 
 				"groupInfo": this.props.groupInfo,
-				'currentRegion': this.props.currentRegion,
-				appointments: this.props.appointments,
-				route: this.props.route });
+				});
 				break;
 			default:
 				break;
@@ -153,13 +152,12 @@ export default class ChatRoom extends Component {
 	}
 	componentWillReceiveProps(nextProps) {
 		console.log('chat room received props');
-		console.log(nextProps.currentRegion);
 	}
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
 				<ToolbarAndroid
-					style={{ height: 50, backgroundColor: MAIN_COLOR }}
+					style={{ height: TOOLBAR_HEIGHT, backgroundColor: MAIN_COLOR }}
 					navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
 					title={this.props.groupInfo.name}
 					actions={[

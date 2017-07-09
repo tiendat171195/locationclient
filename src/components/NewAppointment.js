@@ -18,6 +18,8 @@ import MapView from 'react-native-maps';
 import { Actions } from "react-native-router-flux";
 import apis from '../apis/api.js';
 import io from 'socket.io-client/dist/socket.io.js';
+import { connect } from 'react-redux';
+
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.01;
@@ -29,6 +31,7 @@ import {
     CONTENT_TEXT_COLOR,
     MAIN_FONT,
     MAIN_COLOR,
+    TOOLBAR_HEIGHT,
     PLACEHOLDER_TEXT_COLOR
 } from './type.js';
 // create a component
@@ -53,7 +56,8 @@ class NewAppointment extends Component {
         this.onActionSelected = this.onActionSelected.bind(this);
     }
     componentWillMount() {
-        this.startNewSocket();
+        console.log('getSocketResponse');
+        console.log(this.props.getSocketResponse.data);
     }
     convertStartingDate() {
         let startingDate = new Date(this.state.start_date);
@@ -191,19 +195,11 @@ class NewAppointment extends Component {
                 break;
         }
     }
-    startNewSocket(groupID) {
-        if (groupID === null) return;
-        if (this.socket !== undefined) this.socket.disconnect();
-        this.socket = io(API_path + 'maps?group_id=' + groupID, { jsonp: false });
-        this.socket.emit('authenticate', { "token": this.props.userInfo.user_token });
-        this.socket.on('authenticated', function () {
-        });
-        this.socket.on('unauthorized', function (msg) {
-            console.log("unauthorized: " + JSON.stringify(msg.data));
-        });
-    }
     addNewAppointment() {
-        this.socket.emit('add_appointment', JSON.stringify({
+        //check first
+        //To-do check
+        
+        this.props.getSocketResponse.data.emit('add_appointment', JSON.stringify({
             "group_id": this.props.groupInfo._id,
             "address": this.state.appointment_address,
             "start_time": this.state.start_date,
@@ -219,7 +215,7 @@ class NewAppointment extends Component {
         return (
             <View style={{ flex: 1 }}>
                 <ToolbarAndroid
-                    style={{ height: 50, backgroundColor: MAIN_COLOR }}
+                    style={{ height: TOOLBAR_HEIGHT, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title={'Cài đặt điểm hẹn'}
                     onIconClicked={() => { Actions.pop() }}
@@ -256,10 +252,10 @@ class NewAppointment extends Component {
                         </Text>
                     </View>
 
-                    <View style={{ backgroundColor: 'white', padding: 5, paddingBottom:10 }}>
+                    <View style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 30, width: 30, marginRight:5 }}
+                                style={{ height: 30, width: 30, marginRight: 5 }}
                                 source={{ uri: 'http://www.freeiconspng.com/uploads/schedule-icon-7.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Ngày kết thúc:</Text>
                         </View>
@@ -283,7 +279,7 @@ class NewAppointment extends Component {
                     <View style={{ backgroundColor: 'white', padding: 5, marginTop: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Image
-                                style={{ height: 30, width: 30, marginRight:5 }}
+                                style={{ height: 30, width: 30, marginRight: 5 }}
                                 resizeMode='contain'
                                 source={{ uri: 'http://www.kasal.com/images/site_assets/icon-address.png' }} />
                             <Text style={{ fontSize: 25, color: 'black' }}>Địa chỉ:</Text>
@@ -321,8 +317,8 @@ class NewAppointment extends Component {
                                 }, 2000);
                             }}>
                                 <Image
-                                style={{height:30, width:30}}
-                                source={{uri:'https://www.shareicon.net/download/2015/08/04/80098_find_512x512.png'}} />
+                                    style={{ height: 30, width: 30 }}
+                                    source={{ uri: 'https://www.shareicon.net/download/2015/08/04/80098_find_512x512.png' }} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -354,10 +350,16 @@ class NewAppointment extends Component {
                             <View style={{ alignContent: 'center', alignSelf: 'flex-start', padding: 5, backgroundColor: "white", borderRadius: 10 }}>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        console.log(this.props.currentRegion);
-                                        if (this.props.currentRegion !== null) {
-                                            this.refs.map.animateToRegion(this.props.currentRegion, 2000);
+                                        if (this.props.getLocationResponse.data.latitude !== undefined) {
+                                            this.refs.map.animateToRegion({
+                                                latitude: this.props.getLocationResponse.data.latitude,
+                                                longitude: this.props.getLocationResponse.data.longitude,
+                                                latitudeDelta: LATITUDE_DELTA,
+                                                longitudeDelta: LONGITUDE_DELTA
+
+                                            }, 2000);
                                         }
+
                                     }}>
                                     <Image
                                         source={require("../assets/map/navbar_gps_icon.png")}
@@ -385,5 +387,19 @@ class NewAppointment extends Component {
     }
 }
 
-//make this component available to the app
-export default NewAppointment;
+function mapStateToProps(state) {
+    return {
+        getLocationResponse: state.getLocationResponse,
+        getSocketResponse: state.getSocketResponse,
+    }
+}
+
+function mapDispatchToProps(dispatch) {
+    return {
+    }
+}
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(NewAppointment);

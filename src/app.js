@@ -4,7 +4,8 @@ import {
   AppRegistry,
   Alert,
   AsyncStorage,
-  View
+  View,
+  StatusBar
 } from 'react-native';
 import { Scene, Router, Actions } from 'react-native-router-flux';
 import { Provider, connect } from 'react-redux';
@@ -27,7 +28,11 @@ import NewAppointment from './components/NewAppointment.js';
 import NewRoute from './components/NewRoute.js';
 import apis from './apis/api.js';
 import SplashScreen from 'react-native-splash-screen';
-
+import {
+  setHeightUnit,
+  HEIGHT_UNIT,
+  MAIN_COLOR_DARK
+} from "./components/type.js";
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -36,6 +41,7 @@ export default class App extends Component {
     }
   }
   async componentWillMount() {
+    StatusBar.setBackgroundColor(MAIN_COLOR_DARK);
     await this.checkLoggedIn();
   }
   componentDidMount() {
@@ -49,17 +55,16 @@ export default class App extends Component {
 
     if (!responseAPI.hasOwnProperty('success')) {
       this.state.logged = true;
-      try {
-        await AsyncStorage.setItem('LOGGED_IN', 'true');
-        await AsyncStorage.setItem('USER_INFO', JSON.stringify({
-          'user_id': responseAPI.user_id,
-          "username": responseAPI.username,
-          "password": Password,
-          "token": responseAPI.user_token
-        }));
-      } catch (error) {
-        console.error(error);
-      }
+      			try {
+				await AsyncStorage.setItem('USER_INFO', JSON.stringify({
+					'user_id': responseAPI.user_id,
+					"username": responseAPI.username,
+					"password": Password,
+					"token": responseAPI.user_token
+				}));
+			} catch (error) {
+				console.error(error);
+			}
       apis.updateUserInfo(responseAPI.user_token, responseAPI.user_id);
       Actions.mainscreen({
         'userInfo': responseAPI

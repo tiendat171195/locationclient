@@ -8,7 +8,7 @@ import {
     TimePickerAndroid,
     DatePickerAndroid,
     Image,
-    Dimensions,
+    //Dimensions,
     TouchableOpacity,
     Slider,
     ToolbarAndroid,
@@ -16,13 +16,14 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { Actions } from "react-native-router-flux";
+import {connect} from 'react-redux';
 import apis from '../apis/api.js';
 import io from 'socket.io-client/dist/socket.io.js';
-const { width, height } = Dimensions.get('window');
+//const { width, height } = Dimensions.get('window');
 import DialogAndroid from 'react-native-dialogs';
-const ASPECT_RATIO = width / height;
-const LATITUDE_DELTA = 0.01;
-const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+//const ASPECT_RATIO = width / height;
+//const LATITUDE_DELTA = 0.01;
+//const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 var giobalThis;
 var id = 1000;
@@ -32,7 +33,11 @@ import {
     MAIN_FONT,
     PLACEHOLDER_TEXT_COLOR,
     CALLOUT_BACKGROUND_COLOR,
-    MAIN_COLOR
+    MAIN_COLOR,
+    TOOLBAR_HEIGHT,
+    LATITUDE_DELTA,
+    LONGITUDE_DELTA,
+    width
 } from './type.js';
 import {
     START_MARKER,
@@ -104,7 +109,7 @@ class NewRoute extends Component {
         })
     }
     animationMap() {
-        this.refs.map.animateToRegion(this.state.currentRegion, 2000);
+//this.refs.map.animateToRegion(this.state.currentRegion, 2000);
     }
     async showStartTimePicker() {
         try {
@@ -440,7 +445,7 @@ class NewRoute extends Component {
         return (
             <View style={{ flex: 1 }}>
                 <ToolbarAndroid
-                    style={{ height: 50, backgroundColor: MAIN_COLOR }}
+                    style={{ height: TOOLBAR_HEIGHT, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title={'Cài đặt lộ trình'}
                     onIconClicked={() => { Actions.pop() }}
@@ -648,9 +653,14 @@ class NewRoute extends Component {
                             <View style={{ alignContent: 'center', alignSelf: 'flex-start', padding: 5, backgroundColor: "white", borderRadius: 10 }}>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        console.log(this.props);
-                                        if (this.props.currentRegion != null) {
-                                            this.refs.map.animateToRegion(this.props.currentRegion, 2000);
+                                        if (this.props.getLocationResponse.data.latitude !== undefined) {
+                                            this.refs.map.animateToRegion({
+                                                latitude: this.props.getLocationResponse.data.latitude,
+                                                longitude: this.props.getLocationResponse.data.longitude,
+                                                latitudeDelta: LATITUDE_DELTA,
+                                                longitudeDelta: LONGITUDE_DELTA
+
+                                            }, 2000);
                                         }
                                     }}>
                                     <Image
@@ -679,5 +689,18 @@ class NewRoute extends Component {
     }
 }
 
-//make this component available to the app
-export default NewRoute;
+function mapStateToProps(state) {
+	return {
+		getLocationResponse: state.getLocationResponse
+	}
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+	}
+}
+
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(NewRoute);

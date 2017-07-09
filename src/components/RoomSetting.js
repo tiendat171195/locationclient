@@ -25,11 +25,13 @@ import io from 'socket.io-client/dist/socket.io.js';
 import apis from '../apis/api.js';
 import MapView from 'react-native-maps';
 import {
-    MAIN_COLOR
+    MAIN_COLOR,
+    TOOLBAR_HEIGHT
 } from './type.js';
 import {
     DEFAULT_ROOM_AVATAR
 } from './images.js';
+import {connect} from 'react-redux';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const DEFAULT_LATITUDE = 10.762934;
@@ -43,7 +45,7 @@ let avatar = 'https://www.timeshighereducation.com/sites/default/files/byline_ph
 const API_path = 'https://stormy-woodland-18039.herokuapp.com/';
 
 const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
-export default class RoomSetting extends Component {
+class RoomSetting extends Component {
     constructor(props) {
         super(props);
         giobalThis = this;
@@ -53,9 +55,11 @@ export default class RoomSetting extends Component {
             start_location: null,
             start_address: '',
             start_date: null,
+            start_radius:0,
             end_location: null,
             end_address: null,
             end_date: null,
+            end_radius:0,
             stopovers: [],
             direction_coordinates: [],
             dataMembersSource: ds.cloneWithRows([]),
@@ -65,67 +69,11 @@ export default class RoomSetting extends Component {
         };
 
         //this.onMapPress = this.onMapPress.bind(this);
-        this.startNewSocket = this.startNewSocket.bind(this);
-        this.getSocketData = this.getSocketData.bind(this);
         this.getPointerInfo = this.getPointerInfo.bind(this);
         this.findDirection = this.findDirection.bind(this);
         this.getRouteInfo = this.getRouteInfo.bind(this);
     }
-    startNewSocket(groupID) {
-        if (groupID === null) return;
-        if (this.socket !== undefined) this.socket.disconnect();
-        this.socket = io(API_path + 'maps?group_id=' + groupID, { jsonp: false });
-        this.socket.emit('authenticate', { "token": this.props.userInfo.user_token });
-        this.socket.on('authenticated', function () {
-            console.log('authenticated roomsetting');
-            giobalThis.addSocketCallback();
-            giobalThis.getSocketData(groupID);
-        });
-        this.socket.on('unauthorized', function (msg) {
-            console.log("unauthorized: " + JSON.stringify(msg.data));
-        });
-    }
-    addSocketCallback() {
-        this.socket.on('get_starting_point_callback', function (data) {
-            if (giobalthis.props.groupInfo._id != data.group_id) return;
-            if (data.hasOwnProperty("start_time")) {
-                giobalThis.setState({
-                    start_date: data.start_time
-                })
-            }
-        });
-
-        this.socket.on('get_ending_point_callback', function (data) {
-            if (giobalthis.props.groupInfo._id != data.group_id) return;
-            if (data.hasOwnProperty("end_time")) {
-                giobalThis.setState({
-                    end_date: data.end_time
-                })
-            }
-        });
-
-
-
-        this.socket.on('get_route_callback', async function (data) {
-            console.log("get_route_callback roomsetting");
-
-            giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
-        });
-
-    }
-    getSocketData(groupID) {
-        this.socket.emit('get_starting_point', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-        this.socket.emit('get_ending_point', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-        this.socket.emit('get_route', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-
-    }
-    updateSocketData() {
+    /* updateSocketData() {
         if (this.checkValid()) {
             this.socket.emit('update_starting_point', JSON.stringify({
                 "group_id": this.props.groupInfo._id,
@@ -178,9 +126,9 @@ export default class RoomSetting extends Component {
                 { cancelable: false }
             )
         }
-    }
+    } */
     async getRouteInfo() {
-        data = this.props.route;
+        let data = this.props.getRoutesResponse.data.find(obj => obj.group_id == this.props.groupInfo._id);
         if (data.hasOwnProperty("start_latlng") && data.start_latlng.lat != undefined) {
             var pointer = await this.getPointerInfo({
                 latitude: data.start_latlng.lat,
@@ -191,10 +139,12 @@ export default class RoomSetting extends Component {
                 longitude: data.start_latlng.lng
             };
             this.state.start_address = pointer.address;
+            this.state.start_radius = data.start_radius;
         }
         else {
             this.state.start_location = null;
             this.state.start_address = '';
+            this.state.start_radius = 0;
         }
 
         if (data.hasOwnProperty("end_latlng") && data.end_latlng.lat != undefined) {
@@ -207,10 +157,12 @@ export default class RoomSetting extends Component {
                 longitude: data.end_latlng.lng
             };
             this.state.end_address = pointer.address;
+            this.state.end_radius = data.end_radius;
         }
         else {
             this.state.end_location = null;
             this.state.end_address = '';
+            this.state.end_radius = 0;
         }
 
         this.state.stopovers = [];
@@ -223,11 +175,18 @@ export default class RoomSetting extends Component {
                 }
             });
         });
+        this.findDirection(this.state.start_location, this.state.end_location);
     }
     componentWillMount() {
         this.state.dataMembersSource = ds.cloneWithRows(this.props.groupInfo.users);
-        this.state.dataAppointmentsSource = ds.cloneWithRows(this.props.appointments);
-        this.startNewSocket(this.props.groupInfo._id);
+        this.state.dataAppointmentsSource = ds.cloneWithRows(this.props.getAppointmentsResponse.data.find(obj => obj.group_id == this.props.groupInfo._id).appointments);
+        this.getRouteInfo();
+    }
+    componentWillReceiveProps(nextProps){
+        if(!this.props.getAppointmentsResponse.uptodate && nextProps.getAppointmentsResponse.uptodate){
+            this.state.dataAppointmentsSource = ds.cloneWithRows(nextProps.getAppointmentsResponse.data.find(obj => obj.group_id == this.props.groupInfo._id).appointments);
+        }
+
     }
     convertDate(date) {
         let tempDate = new Date(date);
@@ -325,7 +284,7 @@ export default class RoomSetting extends Component {
         return (
             <View style={{ flex: 1, backgroundColor: 'silver' }}>
                 <ToolbarAndroid
-                    style={{ height: 50, backgroundColor: MAIN_COLOR }}
+                    style={{ height: TOOLBAR_HEIGHT, backgroundColor: MAIN_COLOR }}
                     navIcon={{ uri: "http://semijb.com/iosemus/BACK.png", width: 50, height: 50 }}
                     title={'Cài đặt phòng'}
                     onIconClicked={() => { Actions.pop() }}
@@ -380,10 +339,10 @@ export default class RoomSetting extends Component {
                             enableEmptySections={true}
                             style={{}}
                             renderFooter={() => {
-                                return (<View style={{ flexDirection: 'column', alignItems: 'center', margin: 5 }}>
+                                return (<View style={{marginLeft:20, flexDirection: 'column', justifyContent:'center', alignItems: 'center', margin: 5 }}>
                                     <TouchableOpacity>
                                         <Image
-                                            style={{ width: 70, height: 70, alignSelf: "center", padding: 5, borderRadius: 70 / 2 }}
+                                            style={{ width: 50, height: 50, alignSelf: "center", padding: 5, borderRadius: 70 / 2 }}
                                             resizeMode="cover"
                                             source={{ uri: 'https://www.shareicon.net/download/2015/08/30/93295_add_512x512.png' }}
                                         />
@@ -401,7 +360,7 @@ export default class RoomSetting extends Component {
                                             resizeMode="cover"
                                             source={{ uri: 'http://themicon.co/theme/centric/v1.6/angularjs/app/img/user/04.jpg' }}
                                         />
-                                        <Text style={{ fontSize: 20 }}>{data.username}</Text>
+                                        <Text style={{ fontSize: 20, color:'black' }}>{data.username}</Text>
                                     </View>
                                 )
 
@@ -425,7 +384,7 @@ export default class RoomSetting extends Component {
                             scrollEnabled={true}
                             style={{}}
                             dataSource={this.state.dataAppointmentsSource}
-                            renderFooter={() => <View style={{ flexDirection: 'column', alignItems: 'center', margin: 5, maxWidth: width - 30, backgroundColor: 'white', borderRadius: 15 }}>
+                            renderFooter={() => <View style={{ marginLeft:20, flexDirection: 'column', justifyContent:'center', alignItems: 'center', margin: 5 }}>
                                 <TouchableOpacity onPress={() => {
                                     Actions.newappointment({
                                         userInfo: this.props.userInfo,
@@ -434,11 +393,11 @@ export default class RoomSetting extends Component {
                                     })
                                 }}>
                                     <Image
-                                        style={{ width: 70, height: 70, margin: 10 }}
+                                        style={{ width: 50, height: 50, margin: 10 }}
                                         source={{ uri: 'https://www.shareicon.net/download/2015/08/30/93295_add_512x512.png' }} />
 
                                 </TouchableOpacity>
-                                <Text style={{ fontSize: 30 }}>Thêm</Text>
+                                <Text style={{ fontSize: 20 }}>Thêm</Text>
                             </View>}
                             renderRow={(data, section, index, highlightRow) => {
                                 return (<View style={{ flexDirection: 'row', alignItems: 'center', margin: 5, maxWidth: width - 30, backgroundColor: 'cyan', borderRadius: 15 }}>
@@ -483,7 +442,7 @@ export default class RoomSetting extends Component {
                                 onPress={() => {
                                     Actions.newroute({
                                         userInfo: this.props.userInfo, groupInfo: this.props.groupInfo,
-                                        currentRegion: this.props.currentRegion
+                                        //currentRegion: this.props.currentRegion
                                     })
                                 }}>
                                 <Text style={{ fontSize: 15, color: 'blue' }}>Sửa lộ trình</Text>
@@ -525,12 +484,6 @@ export default class RoomSetting extends Component {
                                                         style={{ height: 48, width: 48 }}
                                                     />
                                                 </View>
-                                                <MapView.Circle
-                                                    center={u.coordinate}
-                                                    radius={u.radius}
-                                                    fillColor='sandybrown'
-                                                    strokeWidth={1}
-                                                />
 
                                             </MapView.Marker>)
                                     })}
@@ -574,8 +527,9 @@ export default class RoomSetting extends Component {
                                             underlayColor='transparent'
                                             onPress={async () => {
                                                 let url = await apis.uploadImage(p.node.image.uri);
-                                                apis.updateGroupImage(url);
+                                                await apis.updateGroupImage(url);
                                                 this.toggleModal();
+                        
                                             }}
                                         >
                                             <Image
@@ -596,3 +550,20 @@ export default class RoomSetting extends Component {
         );
     }
 }
+
+function mapStateToProps(state) {
+	return {
+        getAppointmentsResponse: state.getAppointmentsResponse,
+        getRoutesResponse: state.getRoutesResponse,
+	}
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+	}
+}
+
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(RoomSetting);
