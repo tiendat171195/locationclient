@@ -72,7 +72,7 @@ class NewRoute extends Component {
         this.onActionSelected = this.onActionSelected.bind(this);
     }
     componentWillMount() {
-        this.startNewSocket();
+        this.getRouteInfo();
     }
     convertStartingDate() {
         let startingDate = new Date(this.state.start_date);
@@ -217,94 +217,61 @@ class NewRoute extends Component {
                 break;
         }
     }
-    startNewSocket(groupID) {
-        if (groupID === null) return;
-        if (this.socket !== undefined) this.socket.disconnect();
-        this.socket = io(API_path + 'maps?group_id=' + groupID, { jsonp: false });
-        this.socket.emit('authenticate', { "token": this.props.userInfo.user_token });
-        this.socket.on('authenticated', function () {
-            console.log('authenticated newroute');
-        });
-        this.socket.on('unauthorized', function (msg) {
-            console.log("unauthorized: " + JSON.stringify(msg.data));
-        });
-    }
-    getSocketData(groupID) {
-        this.socket.emit('get_starting_point', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-        this.socket.emit('get_ending_point', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-        this.socket.emit('get_route', JSON.stringify({
-            "group_id": this.props.groupInfo._id
-        }));
-
-    }
-    addSocketCallback() {
-        this.socket.on('get_starting_point_callback', function (data) {
-            if (giobalthis.props.groupInfo._id != data.group_id) return;
-            if (data.hasOwnProperty("start_time")) {
-                giobalThis.setState({
-                    start_date: data.start_time
-                })
-            }
-        });
-
-        this.socket.on('get_ending_point_callback', function (data) {
-            if (giobalthis.props.groupInfo._id != data.group_id) return;
-            if (data.hasOwnProperty("end_time")) {
-                giobalThis.setState({
-                    end_date: data.end_time
-                })
-            }
-        });
-
-
-
-        this.socket.on('get_route_callback', async function (data) {
-            console.log("get_route_callback");
-            console.log(data);
-            if (data.hasOwnProperty("start_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.start_latlng.lat,
-                    longitude: data.start_latlng.lng
-                });
-                giobalThis.state.start_location = {
-                    latitude: data.start_latlng.lat,
-                    longitude: data.start_latlng.lng
-                };
-                giobalThis.state.start_address = pointer.address;
-                giobalThis.state.start_radius = data.start_radius;
-            }
-
-
-            if (data.hasOwnProperty("end_latlng")) {
-                var pointer = await giobalThis.getPointerInfo({
-                    latitude: data.end_latlng.lat,
-                    longitude: data.end_latlng.lng
-                });
-                giobalThis.state.end_location = {
-                    latitude: data.end_latlng.lat,
-                    longitude: data.end_latlng.lng
-                };
-                giobalThis.state.end_address = pointer.address;
-                giobalThis.state.end_radius = data.end_radius;
-            }
-
-            giobalThis.state.stopovers = [];
-            data.stopovers.map(u => {
-                giobalThis.state.stopovers.push({
-                    "coordinate":
-                    {
-                        "latitude": u.latlng.lat,
-                        "longitude": u.latlng.lng
-                    },
-                    'radius': u.radius
-                });
+    
+    async getRouteInfo() {
+        let data = this.props.getRoutesResponse.data.find(obj => obj.group_id == this.props.groupInfo._id);
+        if(data === undefined) return;
+        if (data.hasOwnProperty("start_latlng") && data.start_latlng.lat != undefined) {
+            var pointer = await this.getPointerInfo({
+                latitude: data.start_latlng.lat,
+                longitude: data.start_latlng.lng
             });
-            giobalThis.findDirection(giobalThis.state.start_location, giobalThis.state.end_location);
+            this.state.start_location = {
+                latitude: data.start_latlng.lat,
+                longitude: data.start_latlng.lng
+            };
+            this.state.start_address = pointer.address;
+            this.state.start_radius = data.start_radius;
+        }
+        else {
+            this.state.start_location = null;
+            this.state.start_address = '';
+            this.state.start_radius = 0;
+        }
+
+        if (data.hasOwnProperty("end_latlng") && data.end_latlng.lat != undefined) {
+            var pointer = await this.getPointerInfo({
+                latitude: data.end_latlng.lat,
+                longitude: data.end_latlng.lng
+            });
+            this.state.end_location = {
+                latitude: data.end_latlng.lat,
+                longitude: data.end_latlng.lng
+            };
+            this.state.end_address = pointer.address;
+            this.state.end_radius = data.end_radius;
+        }
+        else {
+            this.state.end_location = null;
+            this.state.end_address = '';
+            this.state.end_radius = 0;
+        }
+
+        this.state.stopovers = [];
+        data.stopovers.map(u => {
+            this.state.stopovers.push({
+                "coordinate":
+                {
+                    "latitude": u.latlng.lat,
+                    "longitude": u.latlng.lng
+                }
+            });
         });
+        this.state.start_date = data.start_time;
+        this.state.end_date = data.end_time;
+        this.convertStartingDate();
+        this.convertEndingDate();
+        this.findDirection(this.state.start_location, this.state.end_location);
     }
     async addMarkerOnMap(location, type) {
         var marker = await this.getPointerInfo(location);
@@ -381,23 +348,7 @@ class NewRoute extends Component {
         this.forceUpdate();
     }
     addNewRoute() {
-        this.socket.emit('update_starting_point', JSON.stringify({
-            "group_id": this.props.groupInfo._id,
-            "start_time": this.state.start_date,
-            "start_latlng": {
-                "lat": this.state.start_location.latitude,
-                "lng": this.state.start_location.longitude
-            }
-        }));
-
-        this.socket.emit('update_ending_point', JSON.stringify({
-            "group_id": this.props.groupInfo._id,
-            "end_time": this.state.end_date,
-            "end_latlng": {
-                "lat": this.state.end_location.latitude,
-                "lng": this.state.end_location.longitude
-            }
-        }));
+       
 
         var tempStopovers = [];
         for (var index = 0; index < this.state.stopovers.length; index++) {
@@ -408,8 +359,7 @@ class NewRoute extends Component {
                 }
             })
         }
-        console.log('add_route');
-        console.log({
+        this.props.getSocketResponse.data.emit('add_route', JSON.stringify({
             group_id: this.props.groupInfo._id,
             start_radius: this.state.start_radius,
             start_latlng: {
@@ -421,20 +371,8 @@ class NewRoute extends Component {
                 lat: this.state.end_location.latitude,
                 lng: this.state.end_location.longitude
             },
-            stopovers: tempStopovers
-        });
-        this.socket.emit('add_route', JSON.stringify({
-            group_id: this.props.groupInfo._id,
-            start_radius: this.state.start_radius,
-            start_latlng: {
-                lat: this.state.start_location.latitude,
-                lng: this.state.start_location.longitude
-            },
-            end_radius: this.state.end_radius,
-            end_latlng: {
-                lat: this.state.end_location.latitude,
-                lng: this.state.end_location.longitude
-            },
+            start_time: this.state.start_date,
+            end_time: this.state.end_date,
             stopovers: tempStopovers
         }));
 
@@ -516,7 +454,7 @@ class NewRoute extends Component {
 
                         <View style={{ flexDirection: 'row', marginHorizontal: 5 }}>
                             <TextInput
-                                placeholder="Nhập địa chỉ điểm hẹn"
+                                placeholder="Tìm kiếm địa điểm"
                                 style={{
                                     flex: 1,
                                     fontSize: 20,
@@ -691,7 +629,9 @@ class NewRoute extends Component {
 
 function mapStateToProps(state) {
 	return {
-		getLocationResponse: state.getLocationResponse
+        getLocationResponse: state.getLocationResponse,
+        getSocketResponse: state.getSocketResponse,
+        getRoutesResponse: state.getRoutesResponse,
 	}
 }
 

@@ -56,8 +56,6 @@ class NewAppointment extends Component {
         this.onActionSelected = this.onActionSelected.bind(this);
     }
     componentWillMount() {
-        console.log('getSocketResponse');
-        console.log(this.props.getSocketResponse.data);
     }
     convertStartingDate() {
         let startingDate = new Date(this.state.start_date);
@@ -204,6 +202,7 @@ class NewAppointment extends Component {
             "address": this.state.appointment_address,
             "start_time": this.state.start_date,
             "end_time": this.state.end_date,
+            "radius": this.state.radius,
             "latlng": {
                 "lat": this.state.appointment_location.latitude,
                 "lng": this.state.appointment_location.longitude

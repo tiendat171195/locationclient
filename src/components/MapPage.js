@@ -275,6 +275,8 @@ class MapPage extends Component {
       direction_to_route: [],
       route_direction: [],
       isBeing: false,
+      showUsers: false,
+      dataUsersSource: ds.cloneWithRows([]),
     };
 
 
@@ -423,7 +425,6 @@ class MapPage extends Component {
 
     //Update 1 member's location
     this.props.getSocketResponse.data.on('update_latlng_callback', function (data) {
-      console.log('update_latlng');
       if (data.user_id == giobalThis.props.userInfo.user_id || data.group_id != giobalThis.state.groupID) return;
       giobalThis.replaceLocationById(data.user_id, { 'latitude': data.latlng.lat, 'longitude': data.latlng.lng });
 
@@ -518,30 +519,42 @@ class MapPage extends Component {
       });
     });
 
-    /* this.props.getSocketResponse.data.on("get_appointments_callback", function (data) {
-      //console.log('get_appointments_callback MapPage');
-      //console.log(data);
+    this.props.getSocketResponse.data.on("add_user_to_appointment_callback", function (data) {
+      if (data.user_id == giobalThis.props.getUserInfoResponse.data.user_id) {
+        Alert.alert(
+          "Thông báo điểm hẹn",
+          'Bạn vừa đi đến điểm hẹn ' + giobalThis.props.getAppointmentsResponse.data.find(obj => obj.group_id == data.group_id).appointments.find(obj => obj._id == data.appointment_id).address
+        );
+        return;
+      }
+      if (data.group_id == giobalThis.state.groupID) {
 
-       giobalThis.state.appointments = [];
+        Alert.alert(
+          "Thông báo điểm hẹn",
+          (giobalThis.props.getRoomsResponse.data.groups.find(obj => obj._id == giobalThis.state.groupID))
+            .users.find(obj => obj._id == data.user_id).username
+          + ' vừa đi đến điểm hẹn ' + giobalThis.props.getAppointmentsResponse.data.find(obj => obj.group_id == data.group_id).appointments.find(obj => obj._id == data.appointment_id).address
+        );
+      }
+    });
+    this.props.getSocketResponse.data.on("delete_user_from_appointment_callback", function (data) {
+      if (data.user_id == giobalThis.props.getUserInfoResponse.data.user_id) {
+        Alert.alert(
+          "Thông báo điểm hẹn",
+          'Bạn vừa rời khỏi điểm hẹn ' + giobalThis.props.getAppointmentsResponse.data.find(obj => obj.group_id == data.group_id).appointments.find(obj => obj._id == data.appointment_id).address
+        );
+        return;
+      }
+      if (data.group_id == giobalThis.state.groupID) {
 
-      data.appointments.map(u => {
-        giobalThis.state.appointments.push({
-          "_id": u._id,
-          "address": u.address,
-          "start_time": u.start_time,
-          "end_time": u.end_time,
-          "users": u.users,
-          "coordinate":
-          {
-            "latitude": u.latlng.lat,
-            "longitude": u.latlng.lng
-          }
-        })
-      }); 
-
-      
-      giobalThis.forceUpdate();
-    }); */
+        Alert.alert(
+          "Thông báo điểm hẹn",
+          (giobalThis.props.getRoomsResponse.data.groups.find(obj => obj._id == giobalThis.state.groupID))
+            .users.find(obj => obj._id == data.user_id).username
+          + ' vừa rời khỏi điểm hẹn ' + giobalThis.props.getAppointmentsResponse.data.find(obj => obj.group_id == data.group_id).appointments.find(obj => obj._id == data.appointment_id).address
+        );
+      }
+    });
   }
   addMarker(groupID, coordinate) {
     if (groupID === null) return;
@@ -558,7 +571,11 @@ class MapPage extends Component {
   }
   onMapPress(e) {
     //this.addMarker(this.state.groupID, e.nativeEvent.coordinate);
-
+    if (this.state.showUsers) {
+      this.setState({
+        showUsers: false
+      });
+    }
   }
   replaceLocationById(UserID, LatLng) {
     for (var index = 0; index < this.state.members.length; index++) {
@@ -818,9 +835,9 @@ class MapPage extends Component {
       + ':'
       + (tempDate.getMinutes() < 10 ? '0' + tempDate.getMinutes() : tempDate.getMinutes())
       + ' ngày '
-      + tempDate.getDay()
+      + tempDate.getDate()
       + '/'
-      + tempDate.getMonth()
+      + (tempDate.getMonth() + 1)
       + '/'
       + (1900 + tempDate.getYear());
     return tempText;
@@ -839,21 +856,32 @@ class MapPage extends Component {
         this.setState({
           showMemberList: !this.state.showMemberList,
           showRoutesList: false,
-          showRoutes: false
+          showRoutes: false,
+          showUsers: false,
         });
         break;
       case 1:
         this.setState({
           showMemberList: false,
           showRoutes: false,
-          showRoutesList: !this.state.showRoutesList
+          showRoutesList: !this.state.showRoutesList,
+          showUsers: false,
         });
         break;
       case 2:
         this.setState({
           showMemberList: false,
           showRoutes: !this.state.showRoutes,
-          showRoutesList: false
+          showRoutesList: false,
+          showUsers: false,
+        });
+        break;
+      case 3:
+        this.setState({
+          showMemberList: false,
+          showRoutes: false,
+          showRoutesList: false,
+          showUsers: true
         });
         break;
       case 99:
@@ -1034,7 +1062,7 @@ class MapPage extends Component {
                         <Image
                           style={{ width: 30, height: 30, alignSelf: "center", borderRadius: 30 / 2 }}
                           resizeMode="cover"
-                          source={{uri: this.props.getRoomsResponse.data.groups.find(obj => obj._id == this.state.groupID).users.find(obj=>obj._id == user._id).avatar_url }}
+                          source={{ uri: this.props.getRoomsResponse.data.groups.find(obj => obj._id == this.state.groupID).users.find(obj => obj._id == user._id).avatar_url }}
                         />
                       </Image>
                     </View>
@@ -1078,7 +1106,7 @@ class MapPage extends Component {
                     style={{ width: 150, }}
                     tooltip={true}
                     onPress={() => { this.findDirection(this.props.getLocationResponse.data, this.state.start_location) }}>
-                    <View style={{ flexDirection: 'column', padding: 10, alignItems: 'center', backgroundColor: 'orange', borderRadius: 10 }}>
+                    <View style={{ flexDirection: 'column', padding: 10, alignItems: 'center', backgroundColor: CALLOUT_BACKGROUND_COLOR, borderRadius: 10 }}>
                       <View style={{}}>
                         <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm bắt đầu</Text>
                       </View>
@@ -1110,7 +1138,7 @@ class MapPage extends Component {
                     style={{ width: 150 }}
                     tooltip={true}
                     onPress={() => { this.findDirection(this.props.getLocationResponse.data, this.state.end_location) }}>
-                    <View style={{ flexDirection: 'column', padding: 10, alignItems: 'center', backgroundColor: 'orange', borderRadius: 10 }}>
+                    <View style={{ flexDirection: 'column', padding: 10, alignItems: 'center', backgroundColor: CALLOUT_BACKGROUND_COLOR, borderRadius: 10 }}>
                       <View style={{}}>
                         <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm kết thúc</Text>
                       </View>
@@ -1147,7 +1175,7 @@ class MapPage extends Component {
                       style={{ width: 150 }}
                       tooltip={true}
                       onPress={() => { this.findDirection(this.props.getLocationResponse.data, u.coordinate) }}>
-                      <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'orange', borderRadius: 150 / 2 }}>
+                      <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: CALLOUT_BACKGROUND_COLOR, borderRadius: 150 / 2 }}>
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Điểm dừng chân</Text>
                         </View>
@@ -1162,9 +1190,25 @@ class MapPage extends Component {
                 return (
                   <MapView.Marker
                     title='Điểm hẹn'
-                    key={id++}
+                    description={u.address}
+                    key={u._id}
+                    ref={u._id}
                     coordinate={u.coordinate}
+                    onPress={() => {
+                      let usersArr = [];
+                      u.users.map(user_id => {
+                        usersArr.push({
+                          _id: user_id,
+                          username: (this.props.getRoomsResponse.data.groups.find(obj => obj._id == this.state.groupID)).users.find(obj => obj._id == user_id).username,
+                          avatar_url: (this.props.getRoomsResponse.data.groups.find(obj => obj._id == this.state.groupID)).users.find(obj => obj._id == user_id).avatar_url,
+                        })
+                      });
 
+                      this.setState({
+                        dataUsersSource: ds.cloneWithRows(usersArr)
+                      });
+                      this.choseNewActions(3);
+                    }}
                   >
                   </MapView.Marker>)
               })}
@@ -1516,6 +1560,51 @@ class MapPage extends Component {
               </View>
             }
 
+
+            {this.state.showUsers &&
+              <View style={{ justifyContent: 'flex-end', flexDirection: 'column', ...StyleSheet.absoluteFillObject }}>
+                <View style={{ justifyContent: 'flex-end', paddingHorizontal: 5 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ backgroundColor: 'lightseagreen', opacity: 1, ...StyleSheet.absoluteFillObject, borderTopLeftRadius: 25, borderTopRightRadius: 25 }} />
+                    <Image
+                      style={{ height: 30, width: 30, marginRight: 5 }}
+                      resizeMode='contain'
+                      source={{ uri: 'https://americancontractorsorganization.org/wp-content/uploads/2016/03/Mmeber-Icon-Badge-Directory-features-.png' }} />
+                    <Text style={{ fontSize: 25, color: 'white', fontWeight: 'bold' }}>Thành viên có mặt</Text>
+                  </View>
+                  <View>
+                    <View style={{ backgroundColor: '#ccffee', opacity: 0.8, ...StyleSheet.absoluteFillObject }} />
+                    {this.state.dataUsersSource.getRowCount().toString() != '0' ?
+                      <ListView
+                        horizontal={true}
+                        showsVerticalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
+                        enableEmptySections={true}
+                        scrollEnabled={true}
+                        style={{}}
+                        dataSource={this.state.dataUsersSource}
+                        renderRow={(data) =>
+                          <View style={{ flexDirection: 'column', alignItems: 'center', margin: 5 }}>
+                            <Image
+                              style={{ width: 70, height: 70, alignSelf: "center", borderRadius: 70 / 2 }}
+                              resizeMode="cover"
+                              source={{ uri: data.avatar_url }}
+                            />
+                            <Text style={{ fontSize: 20, color: 'black', fontFamily: 'sans-serif' }}>{data.username}</Text>
+
+                          </View>}
+
+                      />
+                      : <View>
+                        <View style={{ backgroundColor: '#ccffee', opacity: 0.8, ...StyleSheet.absoluteFillObject }} />
+                        <Text style={{ color: 'black', fontSize: 20, padding: 5 }}>Hiện không có thành viên nào có mặt!</Text>
+                      </View>}
+                  </View>
+                </View>
+              </View>
+
+
+            }
 
           </View>
 

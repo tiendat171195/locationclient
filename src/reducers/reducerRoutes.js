@@ -1,7 +1,7 @@
 import {  UPDATE_ROUTES, START_UPDATE_ROUTES  } from "../actions/actionTypes.js";
 
 const initialState = {
-    data: {},
+    data: [],
     uptodate: true,
 }
 

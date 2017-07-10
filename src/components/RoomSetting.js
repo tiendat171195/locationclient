@@ -129,6 +129,7 @@ class RoomSetting extends Component {
     } */
     async getRouteInfo() {
         let data = this.props.getRoutesResponse.data.find(obj => obj.group_id == this.props.groupInfo._id);
+        if(data === undefined) return;
         if (data.hasOwnProperty("start_latlng") && data.start_latlng.lat != undefined) {
             var pointer = await this.getPointerInfo({
                 latitude: data.start_latlng.lat,
@@ -195,9 +196,9 @@ class RoomSetting extends Component {
             + ':'
             + (tempDate.getMinutes() < 10 ? '0' + tempDate.getMinutes() : tempDate.getMinutes())
             + ' ngày '
-            + tempDate.getDay()
+            + tempDate.getDate()
             + '/'
-            + tempDate.getMonth()
+            + ( 1 + tempDate.getMonth())
             + '/'
             + (1900 + tempDate.getYear());
         return tempText;

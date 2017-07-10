@@ -244,20 +244,14 @@ class MainScreen extends Component {
 		this.state.appointments = [];
 		this.state.routes = [];
 		for (var index = 0; index < this.props.getRoomsResponse.data.groups.length; index++) {
-			console.log('test---------------');
-			console.log(JSON.stringify({
-				"group_id": this.props.getRoomsResponse.data.groups[index]._id
-			}))
+
 			this.socket.emit('get_appointments', JSON.stringify({
 				"group_id": this.props.getRoomsResponse.data.groups[index]._id
 			}));
 
-			/* 	this.socket.emit('get_starting_point', JSON.stringify({
-					"group_id": this.props.getRoomsResponse.data.groups[index]._id
-				}));
-				this.socket.emit('get_route', JSON.stringify({
-					"group_id": this.props.getRoomsResponse.data.groups[index]._id
-				})); */
+			 this.socket.emit('get_route', JSON.stringify({
+				"group_id": this.props.getRoomsResponse.data.groups[index]._id
+			})); 
 		}
 		this.forceUpdate();
 	}
@@ -265,13 +259,17 @@ class MainScreen extends Component {
 		//GET APPOINTMENTS
 		this.socket.on("get_appointments_callback", function (data) {
 			let tempArr = [];
+			console.log('get_appointments_callback');
+			console.log(data);
 			data.appointments.map(u => {
 				tempArr.push({
 					"_id": u._id,
+					"group_id": u.group,
 					"address": u.address,
 					"start_time": u.start_time,
 					"end_time": u.end_time,
 					"users": u.users,
+					"radius": u.radius,
 					"coordinate":
 					{
 						"latitude": u.latlng.lat,
@@ -293,13 +291,16 @@ class MainScreen extends Component {
 
 		////ADD APPOINTMENT
 		this.socket.on("add_appointment_callback", function (data) {
-			console.log("add_appointment");
+			console.log('add_appointment_callback');
+			console.log(data);
 			let appointment = {
 				"_id": data.appointment_id,
 				"address": data.address,
+				"group_id": data.group_id,
 				"start_time": data.start_time,
 				"end_time": data.end_time,
 				"users": [],
+				"radius": data.radius,
 				"coordinate":
 				{
 					"latitude": data.latlng.lat,
@@ -320,11 +321,42 @@ class MainScreen extends Component {
 			giobalThis.props.updateAppointments(giobalThis.state.appointments)
 		});
 
+		this.socket.on("add_user_to_appointment_callback", function (data) {
+			console.log('add_user_to_appointment_callback main');
+			let groupAppoints = giobalThis.state.appointments.find(obj => obj.group_id == data.group_id);
+			if (groupAppoints !== undefined) {
+				let appoint = groupAppoints.appointments.find(obj => obj._id == data.appointment_id);
+				if (appoint !== undefined) {
+					let index = appoint.users.indexOf(data.user_id);
+					console.log(index);
+					if (index === -1) {
+						appoint.users.push(data.user_id);
+						giobalThis.props.updateAppointments(giobalThis.state.appointments);
+					}
+				}
+			}
+		});
 
-
+		this.socket.on("delete_user_from_appointment_callback", function (data) {
+			console.log('delete_user_from_appointment_callback main');
+			let groupAppoints = giobalThis.state.appointments.find(obj => obj.group_id == data.group_id);
+			if (groupAppoints !== undefined) {
+				let appoint = groupAppoints.appointments.find(obj => obj._id == data.appointment_id);
+				if (appoint !== undefined) {
+					let index = appoint.users.indexOf(data.user_id);
+					console.log(index);
+					if (index !== -1) {
+						appoint.users.splice(index, 1);
+						giobalThis.props.updateAppointments(giobalThis.state.appointments);
+					}
+				}
+			}
+		});
 
 		////GET ROUTE
 		this.socket.on("get_route_callback", function (data) {
+			console.log('get_route_callback');
+			console.log(data);
 			if (giobalThis.state.routes.find(obj => obj.group_id == data.group_id) !== undefined) {
 				let index = giobalThis.state.routes.findIndex(obj => obj.group_id == data.group_id);
 				giobalThis.state.routes[index].start_latlng = data.start_latlng;
@@ -339,38 +371,73 @@ class MainScreen extends Component {
 			giobalThis.state.routes.push(data);
 			giobalThis.props.updateRoutes(giobalThis.state.routes);
 		});
-		/* 
-				this.socket.on('get_starting_point_callback', function (data) {
-					console.log('get_starting_point_callback');
-					console.log(data);
-					if (giobalThis.state.routes.find(obj => obj.group_id == data.group_id) !== undefined) {
-						let index = giobalThis.state.routes.findIndex(obj => obj.group_id == data.group_id);
-						giobalThis.state.routes[index].start_date = data.start_time;
-						return;
-					}
-					giobalThis.state.routes.push(data);
-		
-					giobalThis.props.updateRoutes(giobalThis.state.routes);
-				});
-		
-				this.socket.on('get_ending_point_callback', function (data) {
-					if (giobalThis.state.routes.find(obj => obj.group_id == data.group_id) !== undefined) {
-						let index = giobalThis.state.routes.findIndex(obj => obj.group_id == data.group_id);
-						giobalThis.state.routes[index] = data;
-						return;
-					}
-					giobalThis.state.routes.push(data);
-					giobalThis.props.updateRoutes(giobalThis.state.routes);
-				});
-		 */
+		this.socket.on("add_route_callback", function (data) {
+			console.log('add_route_callback');
+			console.log(data);
+		});
 	}
 
-	calculateDistance() {
+	async calculateDistance() {
 		console.log('--------calculateDistance');
 		let currentLocation = this.props.getLocationResponse.data;
-		let appointments = this.props.getAppointmentsResponse.data;
-		console.log(currentLocation);
+		let appointments = [];
+		this.props.getAppointmentsResponse.data.map(groupsAppoints => {
+			groupsAppoints.appointments.map(appoint => {
+				let now = (new Date()).getTime();
+				console.log(now);
+				console.log(appoint.start_time - 30 * 60000);
+				console.log(appoint.end_time);
+				if (now > appoint.start_time - 30 * 60000 && now < appoint.end_time) {
+					console.log("trong thoi gian");
+					appointments.push(appoint);
+				}
+			});
+		});
 		console.log(appointments);
+		if (appointments.length === 0) return;
+		let coordinateAppointments = [];
+		appointments.map(appoint => {
+			coordinateAppointments.push(appoint.coordinate);
+		});
+		let distanceToAppointments = await apis.distanceMatrix_googleAPI([this.props.getLocationResponse.data], coordinateAppointments);
+
+		if (distanceToAppointments != null) {
+			appointments.map((u, i) => {
+				if (distanceToAppointments.rows[0].elements[i].status == "OK") {
+					console.log(distanceToAppointments.rows[0].elements[i].distance.value);
+					console.log(u.radius);
+					if (distanceToAppointments.rows[0].elements[i].distance.value < u.radius) {
+						//console.log('Nằm trong appointment');
+						if (u.users.findIndex(obj => obj == this.props.userInfo.user_id) === -1) {
+							console.log('add user to appointment');
+							this.props.getSocketResponse.data.emit('add_user_to_appointment', JSON.stringify({
+								"group_id": u.group_id,
+								"appointment_id": u._id,
+								"user_id": this.props.userInfo.user_id
+							}));
+						}
+					}
+					else {
+						//console.log("Nằm ngoài appointment");
+						if (u.users.findIndex(obj => obj == this.props.userInfo.user_id) >= 0) {
+							console.log('delete user from appointment');
+							console.log(JSON.stringify({
+								"group_id": u.group_id,
+								"appointment_id": u._id,
+								"user_id": this.props.userInfo.user_id
+							}));
+							this.props.getSocketResponse.data.emit('delete_user_from_appointment', JSON.stringify({
+								"group_id": u.group_id,
+								"appointment_id": u._id,
+								"user_id": this.props.userInfo.user_id
+							}));
+						}
+					}
+				}
+			});
+		}
+
+
 	}
 
 
