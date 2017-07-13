@@ -29,7 +29,8 @@ import {
 	DEFAULT_ROOM_AVATAR
 } from './images.js';
 import {
-	MAIN_COLOR
+	MAIN_COLOR,
+	ACTIONBUTTON_COLOR
 } from './type.js';
 
 const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
@@ -101,6 +102,17 @@ class ChatRoomsPage extends Component {
 		}
 
 	}
+	convertDate(date) {
+        let tempDate = new Date(date);
+        let tempText = '';
+        tempText += 
+        	 tempDate.getDate()
+            + '/'
+            + ( 1 + tempDate.getMonth())
+            + '/'
+            + (1900 + tempDate.getYear());
+        return tempText;
+    }
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
@@ -115,18 +127,18 @@ class ChatRoomsPage extends Component {
 						progressBackgroundColor={MAIN_COLOR}
 					/>}>
 					{ this.props.getUserInfoResponse.data.friends != undefined && this.props.getUserInfoResponse.data.friends.length > 0 && <View style={{}}>
-						<View style={{ paddingLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
+						<View style={{ paddingLeft: 16, flexDirection: 'row', alignItems: 'center', paddingTop:8,   }}>
 							<Image
-								style={{ height: 30, width: 30 }}
+								style={{ height: 24, width: 24, marginRight:8 }}
 								source={DEFAULT_ROOM_AVATAR} />
-							<Text style={{ fontSize: 20, paddingLeft: 3, color: 'black', fontWeight: 'bold' }}>Bạn bè trực tuyến</Text>
+							<Text style={{ fontSize: 20, color: 'black', fontWeight: 'bold' }}>Bạn bè trực tuyến</Text>
 						</View>
 						<ListView
 							horizontal={true}
 							showsHorizontalScrollIndicator={false}
 							scrollEnabled={true}
 							enableEmptySections={true}
-							style={{}}
+							style={{paddingBottom:8}}
 							dataSource={this.state.dataFriendsSource}
 							renderRow={(data) =>
 								<View style={{width:70, flexDirection: 'column', alignItems: 'center', margin: 5 }}>
@@ -135,31 +147,31 @@ class ChatRoomsPage extends Component {
 										resizeMode="cover"
 										source={{ uri: data.avatar_url }}
 									/>
-									<Text style={{ fontSize: 20, color:'black' }} numberOfLines={1}>{data.username}</Text>
+									<Text style={{ fontSize: 12, color:'black' }} numberOfLines={1}>{data.username}</Text>
 								</View>}
 						/>
 					</View>}
 
 					<Card containerStyle={{ margin: 0, padding: 0 }} >
 						{
-							this.props.roomsList != undefined && this.props.roomsList.map((u, i) => {
+							(this.props.getRoomsResponse.data.groups !== undefined && this.props.getRoomsResponse.data.groups.length > 0) ? this.props.getRoomsResponse.data.groups.map((u, i) => {
 								return (
 									<ListItem
 										title={
 											<Text style={{
 												
-												fontSize: 18,
+												fontSize: 16,
 												color: 'black',
 												textAlignVertical: 'center',
 												fontFamily: 'sans-serif',
-												fontWeight: 'bold'
+												
 											}}
 												numberOfLines={1}>
 												{u.name}
 											</Text>}
 										subtitle={
 											<Text style={{
-												fontSize: 14,
+												fontSize: 12,
 												fontFamily: 'sans-serif'
 											}}
 												numberOfLines={1}>
@@ -169,7 +181,10 @@ class ChatRoomsPage extends Component {
 										key={i}
 										roundAvatar
 										hideChevron={true}
-										avatar={u.avatar_url == undefined || u.avatar_url == '' ? DEFAULT_ROOM_AVATAR : { uri: u.avatar_url }}
+										avatar={{ uri: u.avatar_url }}
+										rightTitle={
+											<Text style={{fontSize:12}}>{this.convertDate(u.modified_date)}</Text>
+										}
 										onPress={() => {
 
 											Actions.chatroom({
@@ -178,8 +193,8 @@ class ChatRoomsPage extends Component {
 											})
 										}} />
 								)
-							})
-						}
+							}) : <Text style={{fontSize:25, textAlign:'center'}}>Danh sách phòng trống!</Text>
+						} 
 					</Card>
 					{
 						this.state.rooms_request.length > 0 &&
@@ -198,8 +213,8 @@ class ChatRoomsPage extends Component {
 												key={request._id}
 												roundAvatar
 												hideChevron={true}
-												title={request.name}
-												titleStyle={{ fontSize: 18 }}
+												title={<Text style={{fontSize: 13, fontWeight:'bold'}} numberOfLines={1}>{request.name}</Text>}
+												
 												avatar={request.avatar}
 												avatarStyle={{ height: 48, width: 48, borderRadius: 24 }}
 												rightTitle={
@@ -209,14 +224,14 @@ class ChatRoomsPage extends Component {
 															this.acceptRoomRequest(request._id);
 															this.forceUpdate();
 														}}>
-															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, padding: 5, margin: 3, height: 35, width: 90, borderRadius: 5, color: 'white', backgroundColor: 'blue' }}>Xác nhận</Text>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 12, padding: 5, margin: 3, height: 40, width: 70, borderRadius: 5, color: 'white', backgroundColor: 'blue' }}>Xác nhận</Text>
 														</TouchableOpacity>
 														<TouchableOpacity onPress={() => {
 															this.state.rooms_request.splice(i, 1);
 															this.declineRoomRequest(request._id);
 															this.forceUpdate();
 														}}>
-															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, padding: 5, margin: 3, height: 35, width: 90, borderRadius: 5, color: 'white', backgroundColor: 'grey' }}>Từ chối</Text>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 12, padding: 5, margin: 3, height: 40, width: 70, borderRadius: 5, color: 'white', backgroundColor: 'grey' }}>Từ chối</Text>
 														</TouchableOpacity>
 													</View>
 												}
@@ -227,7 +242,7 @@ class ChatRoomsPage extends Component {
 							</Card>
 						</View>}
 				</ScrollView>
-				<ActionButton buttonColor="rgba(231,76,60,1)">
+				<ActionButton buttonColor={ACTIONBUTTON_COLOR}>
 					<ActionButton.Item buttonColor='#9b59b6' title="Tạo phòng" onPress={() => { Actions.createroom({ 'userInfo': this.props.userInfo, 'friendsList': this.props.getUserInfoResponse.data.friends }) }}>
 						<Icon name="md-create" />
 					</ActionButton.Item>

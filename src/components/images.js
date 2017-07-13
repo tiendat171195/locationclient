@@ -23,4 +23,4 @@ export const DEFAULT_AVATAR = require('../assets/image/default_avatar.png');
 //MAPS
 export const START_MARKER = require('../assets/map/start_marker.png');
 export const END_MARKER = require('../assets/map/end_marker.png');
-export const STOPOVER_MARKER = require('../assets/map/map_stopover_marker.png');
+export const STOPOVER_MARKER = require('../assets/map/stopover_marker.png');

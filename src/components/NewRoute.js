@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { Actions } from "react-native-router-flux";
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import apis from '../apis/api.js';
 import io from 'socket.io-client/dist/socket.io.js';
 //const { width, height } = Dimensions.get('window');
@@ -42,6 +42,7 @@ import {
 import {
     START_MARKER,
     END_MARKER,
+    STOPOVER_MARKER
 } from './images.js';
 // create a component
 class NewRoute extends Component {
@@ -109,7 +110,7 @@ class NewRoute extends Component {
         })
     }
     animationMap() {
-//this.refs.map.animateToRegion(this.state.currentRegion, 2000);
+        //this.refs.map.animateToRegion(this.state.currentRegion, 2000);
     }
     async showStartTimePicker() {
         try {
@@ -217,10 +218,10 @@ class NewRoute extends Component {
                 break;
         }
     }
-    
+
     async getRouteInfo() {
         let data = this.props.getRoutesResponse.data.find(obj => obj.group_id == this.props.groupInfo._id);
-        if(data === undefined) return;
+        if (data === undefined) return;
         if (data.hasOwnProperty("start_latlng") && data.start_latlng.lat != undefined) {
             var pointer = await this.getPointerInfo({
                 latitude: data.start_latlng.lat,
@@ -348,7 +349,7 @@ class NewRoute extends Component {
         this.forceUpdate();
     }
     addNewRoute() {
-       
+
 
         var tempStopovers = [];
         for (var index = 0; index < this.state.stopovers.length; index++) {
@@ -487,10 +488,10 @@ class NewRoute extends Component {
                     </View>
 
 
-                    <View style={{ width: width, height: 250 }}>
+                    <View style={{flex:1, width: width, minHeight: 250 }}>
                         <MapView
                             ref="map"
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, ...StyleSheet.absoluteFillObject }}
                             toolbarEnabled={false}
                             onPress={this.onMapPress}>
                             {
@@ -501,6 +502,12 @@ class NewRoute extends Component {
                                         key={0}
                                         coordinate={this.state.start_location}
                                     >
+                                        <View>
+                                            <Image
+                                                source={START_MARKER}
+                                                style={{ height: 48, width: 48 }}
+                                            />
+                                        </View>
                                         <MapView.Callout
                                             style={{ width: 150 }}
                                             tooltip={true}>
@@ -530,6 +537,12 @@ class NewRoute extends Component {
                                         key={1}
                                         coordinate={this.state.end_location}
                                     >
+                                        <View>
+                                            <Image
+                                                source={END_MARKER}
+                                                style={{ height: 48, width: 48 }}
+                                            />
+                                        </View>
                                         <MapView.Callout
                                             style={{ width: 150 }}
                                             tooltip={true}>
@@ -558,10 +571,10 @@ class NewRoute extends Component {
                                         description={u.address}
                                         key={id++}
                                         coordinate={u.coordinate}>
-                                        <View style={{height: 48, width: 48}}>
+                                        <View style={{ height: 48, width: 48 }}>
                                             <Image
-                                                source={START_MARKER}
-                                                style={{ height: 48, width: 48 }}
+                                                source={STOPOVER_MARKER}
+                                                style={{ height: 38, width: 38 }}
                                             />
                                         </View>
                                         <MapView.Callout
@@ -628,19 +641,19 @@ class NewRoute extends Component {
 }
 
 function mapStateToProps(state) {
-	return {
+    return {
         getLocationResponse: state.getLocationResponse,
         getSocketResponse: state.getSocketResponse,
         getRoutesResponse: state.getRoutesResponse,
-	}
+    }
 }
 
 function mapDispatchToProps(dispatch) {
-	return {
-	}
+    return {
+    }
 }
 
 export default connect(
-	mapStateToProps,
-	mapDispatchToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(NewRoute);

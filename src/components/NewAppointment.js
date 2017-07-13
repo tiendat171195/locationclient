@@ -196,7 +196,18 @@ class NewAppointment extends Component {
     addNewAppointment() {
         //check first
         //To-do check
-        
+        console.log('add new appoint');
+        console.log(JSON.stringify({
+            "group_id": this.props.groupInfo._id,
+            "address": this.state.appointment_address,
+            "start_time": this.state.start_date,
+            "end_time": this.state.end_date,
+            "radius": this.state.radius,
+            "latlng": {
+                "lat": this.state.appointment_location.latitude,
+                "lng": this.state.appointment_location.longitude
+            }
+        }));
         this.props.getSocketResponse.data.emit('add_appointment', JSON.stringify({
             "group_id": this.props.groupInfo._id,
             "address": this.state.appointment_address,
@@ -323,7 +334,7 @@ class NewAppointment extends Component {
                     </View>
 
 
-                    <View style={{ width: width, height: 250 }}>
+                    <View style={{flex:1, width: width, minHeight: 250 }}>
                         <MapView
                             ref="map"
                             style={{ ...StyleSheet.absoluteFillObject, flex: 1 }}

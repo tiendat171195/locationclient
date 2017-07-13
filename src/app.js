@@ -41,6 +41,7 @@ export default class App extends Component {
     }
   }
   async componentWillMount() {
+    console.disableYellowBox = true;
     StatusBar.setBackgroundColor(MAIN_COLOR_DARK);
     await this.checkLoggedIn();
   }

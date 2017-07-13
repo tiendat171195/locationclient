@@ -8,7 +8,7 @@ import {
     StyleSheet,
     Image,
     TextInput,
-    Button,
+    
     Alert,
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -16,6 +16,7 @@ import {
     TouchableOpacity,
     Picker
 } from 'react-native';
+import {Button} from "react-native-elements";
 import { Actions } from "react-native-router-flux";
 import { connect } from 'react-redux';
 import { register } from '../actions';
@@ -165,11 +166,13 @@ class Register extends Component {
                     <View style={{ alignItems: 'center', margin: 20 }}>
 
                         <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
-                            <Text style={{ fontFamily: 'sans-serif', fontSize: 35, fontWeight: 'bold', color: 'white' }}>Đăng ký</Text>
+                            <Text style={{ fontFamily: 'sans-serif', fontSize: 24, fontWeight: 'bold', color: 'white' }}>Đăng ký</Text>
+                            <Text style={{ fontFamily: 'sans-serif', fontSize: 12, color: 'white' }}>Tạo tài khoản mới | Kết nối mọi người</Text>
+                            
                         </View>
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
                             marginBottom: 1
@@ -186,11 +189,11 @@ class Register extends Component {
                             <Image
                                 source={TENDANGNHAP_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -204,7 +207,7 @@ class Register extends Component {
                         </View>
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
                             marginBottom: 1
@@ -219,11 +222,11 @@ class Register extends Component {
                             <Image
                                 source={MATKHAU_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -238,7 +241,7 @@ class Register extends Component {
                         </View>
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
                             marginBottom: 1
@@ -253,11 +256,11 @@ class Register extends Component {
                             <Image
                                 source={MATKHAU_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -273,7 +276,7 @@ class Register extends Component {
 
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
                             marginBottom: 1
@@ -288,11 +291,11 @@ class Register extends Component {
                             <Image
                                 source={DIENTHOAI_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -307,7 +310,7 @@ class Register extends Component {
                         </View>
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
                             marginBottom: 1
@@ -322,11 +325,11 @@ class Register extends Component {
                             <Image
                                 source={EMAIL_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -341,10 +344,11 @@ class Register extends Component {
                         </View>
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
-                            marginBottom: 1
+                            marginBottom: 1,
+                            justifyContent:'center'
                         }}>
                             <View style={{
                                 flex: 1,
@@ -356,10 +360,10 @@ class Register extends Component {
                             <Image
                                 source={GIOITINH_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <Picker
                                 mode="dropdown"
-                                style={{flex:1, alignSelf:'flex-start'}}
+                                style={{flex:1, alignSelf:'flex-start', height:72, marginRight:16}}
                                 selectedValue={this.state.gender}
                                 onValueChange={(itemValue, itemIndex) => this.setState({ gender: itemValue })}>
                                 <Picker.Item label="Nam" value="Nam" />
@@ -370,7 +374,7 @@ class Register extends Component {
 
                         <TouchableOpacity onPress={this.showDatePicker.bind(this)}
                             style={{
-                                width: width / 1.3,
+                                width: width / 1.1,
                                 flexDirection: 'row',
                                 alignSelf: 'center',
                                 marginBottom: 1
@@ -386,11 +390,11 @@ class Register extends Component {
                             <Image
                                 source={NGAYSINH_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -404,7 +408,7 @@ class Register extends Component {
                         </TouchableOpacity>
 
                         <View style={{
-                            width: width / 1.3,
+                            width: width / 1.1,
                             flexDirection: 'row',
                             alignSelf: 'center',
                             marginBottom: 1
@@ -421,11 +425,11 @@ class Register extends Component {
                             <Image
                                 source={DIACHI_IMG}
                                 resizeMode='contain'
-                                style={{ height: 30, width: 30, alignSelf: 'center', margin: 5 }} />
+                                style={{ height: 40, width: 40, alignSelf: 'center', margin: 16 }} />
                             <TextInput
                                 style={{
                                     flex: 1,
-                                    fontSize: 25,
+                                    fontSize: 14,
                                     color: MAIN_TEXT_COLOR,
                                     fontFamily: MAIN_FONT,
                                     fontWeight: 'bold',
@@ -444,11 +448,23 @@ class Register extends Component {
                     <View
                         style={{ alignItems: 'center', marginBottom: 50 }}>
                         <Button
+                            backgroundColor='cornflowerblue'
+                            fontSize={16}
+                            fontWeight='bold'
+                            borderRadius={15}
+                            raised = {true}
                             onPress={this.SignUp.bind(this)}
                             title="Tạo tài khoản mới"
-                            color="#841584" />
+                            color="white" />
                     </View>
                 </ScrollView>
+                {!this.props.registerResponse.isRegistering ? <View /> : <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'black', opacity: 0.8, justifyContent: 'center' }}>
+					<ActivityIndicator
+						size='large'
+						color={MAIN_COLOR}
+					/>
+					<Text style={{ color: MAIN_COLOR, fontSize: 25, textAlign: 'center' }}>Vui lòng chờ...</Text>
+				</View>}
             </KeyboardAvoidingView>
         );
     }

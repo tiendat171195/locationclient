@@ -44,7 +44,8 @@ class CreateRoom extends Component {
         if (responseAPI == null) {
             return;
         }
-        
+        console.log('create new room');
+        console.log(responseAPI);
         this.state.added_list.map(async user=>{
             console.log(user);
             await apis.addNewMember(responseAPI.group_id, user._id);
@@ -133,7 +134,7 @@ class CreateRoom extends Component {
                                         key={i}
                                         roundAvatar
                                         hideChevron={true}
-                                        title={friend.username}
+                                        title={<Text style={{fontSize:25, color: 'black'}} numberOfLines={1}>{friend.username}</Text>}
                                         titleStyle={{ fontSize: 25 }}
                                         rightTitle={
                                             <TouchableOpacity onPress={() => {

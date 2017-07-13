@@ -9,6 +9,7 @@ import {
 	StyleSheet,
 	Dimensions,
 	Image,
+	ActivityIndicator
 } from 'react-native';
 import { Actions, ActionConst } from "react-native-router-flux";
 import ScrollableTabView, { DefaultTabBar, } from 'react-native-scrollable-tab-view';
@@ -48,6 +49,9 @@ import {
 	TOOLBAR_HEIGHT,
 } from './type.js';
 var giobalThis;
+
+var callGetCount = 0;
+var callbackCount = 0;
 class MainScreen extends Component {
 	constructor(props) {
 		super(props);
@@ -60,6 +64,7 @@ class MainScreen extends Component {
 			appointments: [],
 			routes: [],
 			searchtext: '',
+			done: false
 		};
 		this.startNewSocket = this.startNewSocket.bind(this);
 		this.addSocketCallback = this.addSocketCallback.bind(this);
@@ -72,13 +77,18 @@ class MainScreen extends Component {
 		SplashScreen.hide()
 		this.configFCM();
 		//this.props.startGeolocation();
+
 		await this.props.getRooms();
 		await this.props.getUserInfo(this.props.userInfo.user_id);
 		this.startGeolocation();
 		setTimeout(function () {
 			SplashScreen.hide();
 		}, 1500);
-
+		setTimeout(function () {
+			giobalThis.setState({
+				done: true
+			})
+		}, 5000);
 	}
 	configFCM() {
 		//FCM
@@ -116,6 +126,7 @@ class MainScreen extends Component {
 		if (!this.props.getRoomsResponse.fetched && nextProps.getRoomsResponse.fetched) {
 			this.startNewSocket();
 		}
+
 		/* if (!this.props.getFriendsResponse.fetched && nextProps.getFriendsResponse.fetched) {
 			this.forceUpdate();
 		} */
@@ -244,20 +255,21 @@ class MainScreen extends Component {
 		this.state.appointments = [];
 		this.state.routes = [];
 		for (var index = 0; index < this.props.getRoomsResponse.data.groups.length; index++) {
-
+			callGetCount++;
 			this.socket.emit('get_appointments', JSON.stringify({
 				"group_id": this.props.getRoomsResponse.data.groups[index]._id
 			}));
-
-			 this.socket.emit('get_route', JSON.stringify({
+			callGetCount++;
+			this.socket.emit('get_route', JSON.stringify({
 				"group_id": this.props.getRoomsResponse.data.groups[index]._id
-			})); 
+			}));
 		}
 		this.forceUpdate();
 	}
 	addSocketCallback() {
 		//GET APPOINTMENTS
 		this.socket.on("get_appointments_callback", function (data) {
+			callbackCount++;
 			let tempArr = [];
 			console.log('get_appointments_callback');
 			console.log(data);
@@ -286,7 +298,12 @@ class MainScreen extends Component {
 				group_id: data.group_id,
 				appointments: tempArr
 			});
-			giobalThis.props.updateAppointments(giobalThis.state.appointments)
+			giobalThis.props.updateAppointments(giobalThis.state.appointments);
+			if (!giobalThis.state.done && callbackCount === callGetCount) {
+				giobalThis.setState({
+					done: true
+				})
+			}
 		});
 
 		////ADD APPOINTMENT
@@ -355,8 +372,7 @@ class MainScreen extends Component {
 
 		////GET ROUTE
 		this.socket.on("get_route_callback", function (data) {
-			console.log('get_route_callback');
-			console.log(data);
+			callbackCount++;
 			if (giobalThis.state.routes.find(obj => obj.group_id == data.group_id) !== undefined) {
 				let index = giobalThis.state.routes.findIndex(obj => obj.group_id == data.group_id);
 				giobalThis.state.routes[index].start_latlng = data.start_latlng;
@@ -370,11 +386,30 @@ class MainScreen extends Component {
 			}
 			giobalThis.state.routes.push(data);
 			giobalThis.props.updateRoutes(giobalThis.state.routes);
+			if (!giobalThis.done && callbackCount === callGetCount) {
+				giobalThis.setState({
+					done: true
+				})
+			}
 		});
 		this.socket.on("add_route_callback", function (data) {
-			console.log('add_route_callback');
-			console.log(data);
+
+			if (giobalThis.state.routes.find(obj => obj.group_id == data.group_id) !== undefined) {
+				let index = giobalThis.state.routes.findIndex(obj => obj.group_id == data.group_id);
+				giobalThis.state.routes[index].start_latlng = data.start_latlng;
+				giobalThis.state.routes[index].end_latlng = data.end_latlng;
+				giobalThis.state.routes[index].start_radius = data.start_radius;
+				giobalThis.state.routes[index].end_radius = data.end_radius;
+				giobalThis.state.routes[index].arriving_users = data.arriving_users;
+				giobalThis.state.routes[index].destination_users = data.destination_users;
+				giobalThis.state.routes[index].stopovers = data.stopovers;
+				giobalThis.props.updateRoutes(giobalThis.state.routes);
+				return;
+			}
+			giobalThis.state.routes.push(data);
+			giobalThis.props.updateRoutes(giobalThis.state.routes);
 		});
+
 	}
 
 	async calculateDistance() {
@@ -447,6 +482,7 @@ class MainScreen extends Component {
 	render() {
 		return (
 			<View style={{ flex: 1 }}>
+
 				<Search
 					ref="searchbox"
 					placeholder="Tìm kiếm"
@@ -476,11 +512,7 @@ class MainScreen extends Component {
 						prerenderingSiblingsNumber={Infinity}
 						onChangeTab={this.onChangeTab}>
 						<ChatRoomsPage tabLabel='md-chatboxes' {...{
-							userInfo: this.props.userInfo,
-							//currentRegion: this.state.currentRegion,
-							roomsList: this.props.getRoomsResponse.data.groups,
-							appointments: this.state.appointments,
-							routes: this.state.routes
+							userInfo: this.props.userInfo
 						}} />
 						<FriendsList tabLabel='ios-people' {...{
 							userInfo: this.props.userInfo
@@ -508,7 +540,7 @@ class MainScreen extends Component {
 													rightIconOnPress={() => { this.addNewFriend(friend._id) }}
 													title={friend.username}
 													//avatar={{ uri: friend.avatar }}
-													avatar={{ uri: "https://scontent.fsgn2-1.fna.fbcdn.net/v/t1.0-9/16388040_1019171961520719_4744401854953494000_n.jpg?oh=7537148cd1b41a9cf3019f78433fdad4&oe=5A0FA5CC" }}
+													avatar={{ uri: friend.avatar_url }}
 													onPress={() => console.log('Clicked')} />
 											)
 										})
@@ -517,6 +549,13 @@ class MainScreen extends Component {
 								: <Text style={{ alignSelf: 'center' }}>Không có kết quả tìm kiếm</Text>}
 						</ScrollView>}
 				</View>
+				{this.state.done ? <View /> : <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'black', opacity: 0.8, justifyContent: 'center' }}>
+					<ActivityIndicator
+						size='large'
+						color={MAIN_COLOR}
+					/>
+					<Text style={{ color: MAIN_COLOR, fontSize: 25, textAlign: 'center' }}>Vui lòng chờ...</Text>
+				</View>}
 			</View>
 		);
 	}

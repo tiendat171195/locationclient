@@ -11,6 +11,7 @@
     "react-native": "^0.44.0",
     "react-native-action-button": "^2.6.8",
     "react-native-animatable": "^1.2.2",
+    "react-native-communications": "^2.2.1",
     "react-native-dialogs": "0.0.19",
     "react-native-elements": "^0.10.3",
     "react-native-fcm": "^7.0.0",
@@ -42,8 +43,5 @@
   },
   "jest": {
     "preset": "react-native"
-  },
-  “rnpm”: {
-   “assets”: [“./assets/font”]
   }
 }

@@ -4,7 +4,6 @@ import {
 	View,
 	TextInput,
 	Text,
-	Button,
 	Alert,
 	BackAndroid,
 	Dimensions,
@@ -14,13 +13,13 @@ import {
 	StyleSheet,
 	TouchableOpacity,
 	findNodeHandle,
-	KeyboardAvoidingView 
+	KeyboardAvoidingView
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
-
+import { Button } from "react-native-elements";
 import MainScreen from './MainScreen.js';
 import TabBarExample from './MainScreen.js';
 import apis from '../apis/api.js';
@@ -53,7 +52,9 @@ export default class Login extends Component {
 			}
 	    })*/
 	}
-
+	componentWillReceiveProps(nextProps) {
+		console.log('login receive props');
+	}
 	async SignIn(Username, Password) {
 		let responseAPI = await apis.SignIn(Username, Password);
 		if (responseAPI == null) {
@@ -96,13 +97,13 @@ export default class Login extends Component {
 	render() {
 		return (
 			<KeyboardAvoidingView
-			  style={{
-				flex: 1,
-				backgroundColor: MAIN_COLOR,
-				justifyContent: 'space-between'
-			}}>
+				style={{
+					flex: 1,
+					backgroundColor: MAIN_COLOR,
+					justifyContent: 'space-between'
+				}}>
 				<Image
-				source={require('../assets/logo/logo_togo.png')}
+					source={require('../assets/logo/logo_togo.png')}
 					resizeMode='contain'
 					style={{
 						height: 200,
@@ -129,11 +130,11 @@ export default class Login extends Component {
 						<Image
 							source={require('../assets/image/tendangnhap.png')}
 							resizeMode='contain'
-							style={{ height: 30, width: 30, alignSelf: 'center' }} />
+							style={{ height: 32, width: 32, alignSelf: 'center', margin: 10 }} />
 						<TextInput
 							style={{
 								flex: 1,
-								fontSize: 25,
+								fontSize: 14,
 								color: MAIN_TEXT_COLOR,
 								fontFamily: MAIN_FONT,
 								fontWeight: 'bold',
@@ -164,49 +165,66 @@ export default class Login extends Component {
 						<Image
 							source={require('../assets/image/matkhau.png')}
 							resizeMode='contain'
-							style={{ height: 30, width: 30 }} />
+							style={{ height: 32, width: 32, alignSelf: 'center', margin: 10 }} />
 						<TextInput
 							style={{
 								flex: 1,
-								fontSize: 25,
+								fontSize: 14,
 								color: MAIN_TEXT_COLOR,
 								fontFamily: MAIN_FONT,
-								fontWeight: 'bold'
+								fontWeight: 'bold',
+								marginTop: 6
 							}}
 							onChangeText={(passWord) => this.setState({ password: passWord })}
 							value={this.state.password}
 							placeholder="Mật khẩu"
+							onSubmitEditing={() => {
+								var checkInfo = this.checkUserInput();
+								if (checkInfo.status == 'error') {
+									Alert.alert(
+										'Lỗi đăng nhập',
+										checkInfo.message
+									);
+								} else {
+									this.SignIn(this.state.username, this.state.password);
+								}
+							}}
 							secureTextEntry={true}
 							placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
 							underlineColorAndroid="transparent" />
 					</View>
 
-					<TouchableOpacity
-						style={{alignSelf:'center', 
-							marginTop: 10, 
-							padding:5, 
-							borderRadius:10}}
-						onPress={() => {
-							var checkInfo = this.checkUserInput();
-							if (checkInfo.status == 'error') {
-								Alert.alert(
-									'Lỗi đăng nhập',
-									checkInfo.message
-								);
-							} else {
-								this.SignIn(this.state.username, this.state.password);
-							}
-						}}>
-						<Text style={{fontFamily:MAIN_FONT, fontWeight:'bold', fontSize: 30, color:'white'}}>Đăng nhập</Text>
-					</TouchableOpacity>
+					<View
+						style={{ alignItems: 'center', marginTop: 16 }}>
+						<Button
+							backgroundColor='cornflowerblue'
+							fontSize={16}
+							fontWeight='bold'
+							borderRadius={15}
+							raised={true}
+							onPress={() => {
+								var checkInfo = this.checkUserInput();
+								if (checkInfo.status == 'error') {
+									Alert.alert(
+										'Lỗi đăng nhập',
+										checkInfo.message
+									);
+								} else {
+									this.SignIn(this.state.username, this.state.password);
+								}
+							}}
+							title="Đăng nhập"
+							color="white" />
+					</View>
+
 				</View>
-				<View style={{ alignSelf: 'center', marginBottom: 50 }}>
+				<View style={{ alignSelf: 'center', marginBottom: 16 }}>
 					<TouchableOpacity
 						onPress={() => Actions.register()}>
-						<Text style={{ color: MAIN_TEXT_COLOR, fontWeight: 'bold', fontSize: 15, fontFamily: MAIN_FONT }}>Chưa có tài khoản? Tạo tài khoản mới</Text>
+						<Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14, fontFamily: MAIN_FONT }}>Chưa có tài khoản? Tạo tài khoản mới</Text>
 					</TouchableOpacity>
 				</View>
-				</KeyboardAvoidingView >
+			</KeyboardAvoidingView >
 		);
 	}
 }

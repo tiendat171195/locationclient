@@ -6,7 +6,8 @@ import RNFetchBlob from 'react-native-fetch-blob';
 import {
 	SERVER_PATH
 } from '../components/type.js';
-const googleAPI_key = "AIzaSyDLK8SCinOR_O6homI06aeza7qXPNVdJhQ";
+//const googleAPI_key = "AIzaSyB2jkGH3HlHuXQ4OQx7wtp96mjjXIHC0rU";
+const googleAPI_key ="AIzaSyCHEZuI1jTZ3TPsF-GaR3LPjVPCJ31pqwA";
 var token = '';
 var user_id = '';
 var apis = {
@@ -491,12 +492,16 @@ var apis = {
 				destinationsText += '' + element.latitude + ',' + element.longitude + '|';
 
 			}
-
+			console.log(distanceSERVER_PATH +
+				"origins=" + originsText +
+				"&destinations=" + destinationsText +
+				"&key=" + googleAPI_key);
 			let response = await fetch(distanceSERVER_PATH +
 				"origins=" + originsText +
 				"&destinations=" + destinationsText +
 				"&key=" + googleAPI_key);
 			let responseJson = await response.json();
+			console.log(responseJson);
 			if (responseJson.status == "OK") {
 				return responseJson;
 			}

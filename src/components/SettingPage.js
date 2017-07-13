@@ -13,6 +13,7 @@ import {
 	StyleSheet,
 	CameraRoll,
 	Modal,
+	Share
 } from 'react-native';
 import { Actions } from "react-native-router-flux";
 import FriendsList from './FriendsList.js';
@@ -21,6 +22,7 @@ import { Avatar, Button, Card, ListItem } from 'react-native-elements';
 import apis from '../apis/api.js';
 import ParallaxScrollView from 'react-native-parallax-scroll-view';
 const { width, height } = Dimensions.get('window');
+import Communications from 'react-native-communications';
 import {
 	DIENTHOAI_IMG,
 	DIACHI_IMG,
@@ -111,9 +113,9 @@ class SettingPage extends Component {
 					parallaxHeaderHeight={width*9/16}
 					backgroundColor='white'
 					renderBackground={() => (
-						<View style={{ backgroundColor: 'orange', width: width, height: width*9/16 }}>
+						<View style={{ backgroundColor: 'black', width: width, height: width*9/16 }}>
 							<Image
-								style={{ width: width, height: width*9/16 }}
+								style={{ width: width, height: width*9/16-30 }}
 								resizeMode="cover"
 								source={BACKGROUND_COVER} />
 						</View>
@@ -140,7 +142,7 @@ class SettingPage extends Component {
 										source={{ uri: this.state.avatar }}
 									/>
 								</TouchableOpacity>
-								<Text style={{ fontSize: 30, alignSelf: 'flex-end', color: 'white' }}>{this.props.getUserInfoResponse.data.username}</Text>
+								<Text style={{ fontSize: 32, alignSelf: 'flex-end', color: 'white' }}>{this.props.getUserInfoResponse.data.username}</Text>
 							</View>
 						</View>
 					)}>
@@ -150,34 +152,34 @@ class SettingPage extends Component {
 								<ListItem
 									
 									title='Ngày sinh'
-									titleStyle={{ fontSize: 18 }}
+									titleStyle={{ fontSize: 14 }}
 									subtitle={this.state.birthday_text}
-									subtitleStyle={{ fontSize: 18 }}
+									subtitleStyle={{ fontSize: 14 }}
 									roundAvatar
 									hideChevron={true}
 									avatar={NGAYSINH_IMG}
 									onPress={() => {
-
+										Share.share({message: 'Message Share Facebook test', title: 'Title test'});
 									}} />
 								<ListItem
 									
 									title='Số điện thoại'
-									titleStyle={{ fontSize: 18 }}
-									subtitle={this.props.getUserInfoResponse.data.phone}
-									subtitleStyle={{ fontSize: 18 }}
+									titleStyle={{ fontSize: 14 }}
+									subtitle={'0' + this.props.getUserInfoResponse.data.phone}
+									subtitleStyle={{ fontSize: 14 }}
 									
 									roundAvatar
 									hideChevron={true}
 									avatar={DIENTHOAI_IMG}
 									onPress={() => {
-
+										Communications.phonecall('0' + this.props.getUserInfoResponse.data.phone, true);
 									}} />
 								<ListItem
 									
 									title='Email'
-									titleStyle={{ fontSize: 18 }}
+									titleStyle={{ fontSize: 14 }}
 									subtitle={this.props.getUserInfoResponse.data.email}
-									subtitleStyle={{ fontSize: 18 }}
+									subtitleStyle={{ fontSize: 14 }}
 									
 									roundAvatar
 									hideChevron={true}
@@ -188,9 +190,9 @@ class SettingPage extends Component {
 								<ListItem
 									
 									title='Giới tính'
-									titleStyle={{ fontSize: 18 }}
+									titleStyle={{ fontSize: 14 }}
 									subtitle={this.props.getUserInfoResponse.data.gender}
-									subtitleStyle={{ fontSize: 18 }}
+									subtitleStyle={{ fontSize: 14 }}
 									
 									roundAvatar
 									hideChevron={true}
@@ -201,9 +203,9 @@ class SettingPage extends Component {
 								<ListItem
 									
 									title='Địa chỉ'
-									titleStyle={{ fontSize: 18 }}
+									titleStyle={{ fontSize: 14 }}
 									subtitle={this.props.getUserInfoResponse.data.city}
-									subtitleStyle={{ fontSize: 18 }}
+									subtitleStyle={{ fontSize: 14 }}
 									
 									roundAvatar
 									hideChevron={true}
@@ -214,7 +216,7 @@ class SettingPage extends Component {
 								<ListItem
 									
 									title='Đăng xuất'
-									titleStyle={{ fontSize: 18 }}
+									titleStyle={{ fontSize: 14 }}
 									
 									roundAvatar
 									hideChevron={true}

@@ -7,7 +7,9 @@ import {
 	TouchableOpacity,
 	Input,
 	Button,
-	ToolbarAndroid
+	ToolbarAndroid,
+	StyleSheet,
+	ActivityIndicator
 } from 'react-native';
 import {Actions} from "react-native-router-flux";
 import { GiftedChat } from 'react-native-gifted-chat';
@@ -20,12 +22,13 @@ import {
 	MAIN_COLOR,
 	TOOLBAR_HEIGHT
 } from './type.js';
-var myThis;
+var giobalThis;
 let id = 99999999;
+var done = false;
 export default class ChatRoom extends Component {
 	constructor(props) {
 		super(props);
-		myThis = this;
+		giobalThis = this;
 		this.state = { messages: [] };
 
 		this.bindThis();
@@ -38,6 +41,7 @@ export default class ChatRoom extends Component {
 	}
 	getSocketData() {
 		console.log('getSocketData');
+		console.log(this.props.userInfo.user_id);
 		this.socket.emit('get_messages', JSON.stringify({
 			'user_id': this.props.userInfo.user_id,
 			'group_id': this.props.groupInfo._id
@@ -46,8 +50,8 @@ export default class ChatRoom extends Component {
 	addSocketCallback() {
 		this.socket.on('add_message_callback', function (data) {
 			console.log('add_message_callback');
-			if (data.chatter._id != myThis.props.userInfo.user_id && data.group._id == myThis.props.groupInfo._id) {
-				myThis.setState((previousState) => {
+			if (data.chatter._id != giobalThis.props.userInfo.user_id && data.group._id == giobalThis.props.groupInfo._id) {
+				giobalThis.setState((previousState) => {
 					return {
 						messages: GiftedChat.append(previousState.messages, [{
 							_id: data.chat_id,
@@ -56,7 +60,7 @@ export default class ChatRoom extends Component {
 							user: {
 								_id: data.chatter._id,
 								name: data.chatter.username,
-								avatar: 'https://facebook.github.io/react/img/logo_og.png',
+								avatar: data.chatter.avatar_url,
 							}
 						}]),
 					};
@@ -66,9 +70,9 @@ export default class ChatRoom extends Component {
 
 		this.socket.on('get_messages_callback', function (data) {
 			console.log('get_messages_callback');
-			if (myThis.props.groupInfo._id != data.group_id) return;
+			if (giobalThis.props.groupInfo._id != data.group_id) return;
 			for (var index = 0; index < data.messages.length; index++) {
-				myThis.setState((previousState) => {
+				giobalThis.setState((previousState) => {
 					return {
 						messages: GiftedChat.append(previousState.messages, [{
 							_id: data.messages[index]._id,
@@ -77,12 +81,14 @@ export default class ChatRoom extends Component {
 							user: {
 								_id: data.messages[index].chatter._id,
 								name: data.messages[index].chatter.username,
-								avatar: 'https://facebook.github.io/react/img/logo_og.png',
+								avatar: data.messages[index].chatter.avatar_url,
 							}
 						}]),
 					};
 				});
 			}
+			done=true;
+			giobalThis.forceUpdate();
 		});
 	}
 	startSocket() {
@@ -90,8 +96,8 @@ export default class ChatRoom extends Component {
 		this.socket = io(SERVER_PATH + 'chats?group_id=' + this.props.groupInfo._id + '/', { jsonp: false });
 		this.socket.emit('authenticate', { "token": this.props.userInfo.user_token });
 		this.socket.on('authenticated', function () {
-			myThis.addSocketCallback();
-			myThis.getSocketData();
+			giobalThis.addSocketCallback();
+			giobalThis.getSocketData();
 			console.log('authenticated');
 		});
 		this.socket.on('unauthorized', function (msg) {
@@ -101,6 +107,12 @@ export default class ChatRoom extends Component {
 	}
 	componentWillMount() {
 		this.startSocket();
+	}
+	componentDidMount(){
+		setTimeout(function(){
+			done=true;
+			giobalThis.forceUpdate();
+		}, 5000);
 	}
 	onSend(messages = []) {
 		this.socket.emit("add_message", JSON.stringify({
@@ -171,15 +183,21 @@ export default class ChatRoom extends Component {
 						return true
 					}}
 					onActionSelected={this.onActionSelected} />
-
-				<GiftedChat
+				{done?<GiftedChat
 					style={{ flex: 1 }}
 					messages={this.state.messages}
 					onSend={this.onSend}
 					user={{
 						_id: this.props.userInfo.user_id,
 					}}
-				/>
+				/>: <View style={{...StyleSheet.absoluteFillObject, backgroundColor:'black', opacity:0.8, justifyContent:'center'}}>
+				<ActivityIndicator
+					size='large'
+					color={MAIN_COLOR}
+					 />
+				<Text style={{color:MAIN_COLOR, fontSize:25, textAlign:'center'}}>Vui lòng chờ...</Text>
+				</View>}
+				
 			</View>
 		);
 	}

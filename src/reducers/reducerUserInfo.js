@@ -12,7 +12,6 @@ export default function dataReducer(state = initialState, action) {
         case FETCHING_USERINFO:
             return {
                 ...state,
-                data:{},
                 isFetching: true,
                 fetched: false
             }

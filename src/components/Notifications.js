@@ -47,6 +47,17 @@ class Notifications extends Component {
 		}, 2000);
 
 	}
+	convertDate(date) {
+        let tempDate = new Date(date);
+        let tempText = '';
+        tempText += 
+        	 tempDate.getDate()
+            + '/'
+            + ( 1 + tempDate.getMonth())
+            + '/'
+            + (1900 + tempDate.getYear());
+        return tempText;
+    }
 	render() {
 		return (
 				<ScrollView style={{ flex: 1, backgroundColor: 'white' }}
@@ -61,21 +72,25 @@ class Notifications extends Component {
 					/>}>
 					<Card containerStyle={{ margin: 0, padding: 0 }} >
 						{
-							this.props.getNotificationsResponse.data.notifications != undefined && this.props.getNotificationsResponse.data.notifications.map((noti, i) => {
+							(this.props.getNotificationsResponse.data.notifications != undefined && this.props.getNotificationsResponse.data.notifications.length > 0) ? this.props.getNotificationsResponse.data.notifications.map((noti, i) => {
 								
 								return (
 									<ListItem
 										key={i}
 										roundAvatar
 										hideChevron={true}
-										title={<Text style={{fontSize: 14, textAlignVertical:'center'}}
-															numberOfLines={3}>
+										title={<Text style={{color:'black',fontSize: 14, textAlignVertical:'center'}}
+															numberOfLines={2}>
 															{noti.content}
 												</Text>}
+										subtitle={
+											<Text style={{fontSize: 14, textAlignVertical:'center'}}>
+												{this.convertDate(noti.date)}</Text>
+											}
 										avatar={{ uri: noti.user.avatar_url }}
 										onPress={() => console.log('Notification Clicked')} />
 								)
-							})
+							}): <Text style={{fontSize:25, textAlign:'center'}}>Chưa có thông báo!</Text>
 						}
 					</Card>
 				</ScrollView>

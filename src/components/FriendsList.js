@@ -125,16 +125,70 @@ class FriendsList extends Component {
 						colors={['#ff0000', '#00ff00', '#0000ff']}
 						progressBackgroundColor="#ffff00"
 					/>}>
+					{
+						(this.props.getUserInfoResponse.data.friend_requests !== undefined && this.props.getUserInfoResponse.data.friend_requests.length > 0) &&
+						<View>
+							<View style={{padding: 16,flexDirection: 'row', alignItems:'center'}}>
+							<Image
+							style={{height:24, width:24, marginRight:8}}
+							source={{uri:'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png'}} />
+							<Text style={{fontSize: 20, color:'black', fontWeight:'bold'}}>Yêu cầu kết bạn</Text>
+							</View>
+							<Card containerStyle={{ margin: 0, padding: 0 }} >
+								{
+									this.props.getUserInfoResponse.data.friend_requests.map((request, i) => {
+										return (
+											<ListItem
+												key={request._id}
+												roundAvatar
+												hideChevron={true}
+												title={<Text style={{fontSize:16}} numberOfLines={1}>{request.username}</Text>}
+												avatar={request.avatar_url}
+												rightTitle={
+													<View style={{ flexDirection: 'row' }}>
+														<TouchableOpacity
+															style={{alignItems:'center', backgroundColor:MAIN_COLOR_DARK,padding: 5, margin: 3, height: 32, width: 70, borderRadius: 5,}}
+															onPress={() => {
+															this.props.getUserInfoResponse.data.friend_requests.splice(i, 1);
+															this.acceptFriend(request._id);
+															this.forceUpdate();
+														}}>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 12,  color: 'white'}}>Xác nhận</Text>
+														</TouchableOpacity>
+														<TouchableOpacity 
+															style={{backgroundColor:'grey',padding: 5, margin: 3, marginRight:0, height: 32, width: 70, borderRadius: 5,}}
+															onPress={() => {
+															this.props.getUserInfoResponse.data.friend_requests.splice(i, 1);
+															this.declineFriendRequest(request._id);
+															this.forceUpdate();
+														}}>
+															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 12, color: 'white'}}>Từ chối</Text>
+														</TouchableOpacity>
+													</View>
+												}
+											/>
+										)
+									})
+								}
+							</Card>
+						</View>}
+					<View>
+						<View style={{padding: 16,flexDirection: 'row', alignItems:'center'}}>
+							<Image
+							style={{height:24, width:24, marginRight:8}}
+							source={{uri:'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png'}} />
+							<Text style={{fontSize: 20, color:'black', fontWeight:'bold'}}>Bạn bè</Text>
+							</View>
 					<Card containerStyle={{ margin: 0, padding: 0 }} >
 						{
-							this.props.getUserInfoResponse.data.friends !== undefined && this.props.getUserInfoResponse.data.friends.map((friend, i) => {
+							(this.props.getUserInfoResponse.data.friends !== undefined && this.props.getUserInfoResponse.data.friends.length >0) ? this.props.getUserInfoResponse.data.friends.map((friend, i) => {
 								return (
 									<ListItem
 										key={i}
 										roundAvatar
 										hideChevron={true}
-										title={friend.username}
-										titleStyle={{ fontSize: 22 }}
+										title={<Text style={{fontSize:16}} numberOfLines={1}>{friend.username}</Text>}
+										
 										rightTitle={
 											<TouchableOpacity>
 											<Image
@@ -146,64 +200,12 @@ class FriendsList extends Component {
 										avatar={{ uri: friend.avatar_url }}
 										onPress={() => console.log('Clicked')} />
 								)
-							})
+							}) : <Text style={{fontSize:25, textAlign:'center'}}>Danh sách bạn bè trống!</Text>
 						}
 					</Card>
-					{
-						(this.props.getUserInfoResponse.data.friend_requests !== undefined && this.props.getUserInfoResponse.data.friend_requests.length > 0) &&
-						<View>
-							<View style={{paddingLeft: 10,flexDirection: 'row', alignItems:'center'}}>
-							<Image
-							style={{height:40, width:40}}
-							source={{uri:'https://d30y9cdsu7xlg0.cloudfront.net/png/38220-200.png'}} />
-							<Text style={{fontSize: 20, paddingLeft: 3, color:'black', fontWeight:'bold'}}>Yêu cầu kết bạn</Text>
-							</View>
-							<Card containerStyle={{ margin: 0, padding: 0 }} >
-								{
-									this.props.getUserInfoResponse.data.friend_requests.map((request, i) => {
-										return (
-											<ListItem
-												key={request._id}
-												roundAvatar
-												hideChevron={true}
-												title={request.username}
-												titleStyle={{ fontSize: 22 }}
-												avatar={request.avatar_url}
-												rightTitle={
-													<View style={{ flexDirection: 'row' }}>
-														<TouchableOpacity
-															style={{alignItems:'center', backgroundColor:MAIN_COLOR_DARK,padding: 5, margin: 3, height: 28, width: 90, borderRadius: 5,}}
-															onPress={() => {
-															this.props.getUserInfoResponse.data.friend_requests.splice(i, 1);
-															this.acceptFriend(request._id);
-															this.forceUpdate();
-														}}>
-															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15,  color: 'white'}}>Xác nhận</Text>
-														</TouchableOpacity>
-														<TouchableOpacity 
-															style={{backgroundColor:'grey',padding: 5, margin: 3, height: 28, width: 90, borderRadius: 5,}}
-															onPress={() => {
-															this.props.getUserInfoResponse.data.friend_requests.splice(i, 1);
-															this.declineFriendRequest(request._id);
-															this.forceUpdate();
-														}}>
-															<Text style={{ textAlign: 'center', textAlignVertical: 'center', fontSize: 15, color: 'white'}}>Từ chối</Text>
-														</TouchableOpacity>
-													</View>
-												}
-											/>
-										)
-									})
-								}
-							</Card>
-						</View>}
+					</View>
 				</ScrollView>
-				<ActionButton buttonColor={ACTIONBUTTON_COLOR}>
-					<ActionButton.Item buttonColor='#9b59b6' title="Thêm bạn" onPress={this.showAddFriendDialog.bind(this)}>
-						<Icon name="md-create" />
-					</ActionButton.Item>
-
-				</ActionButton>
+				
 			</View>
 		);
 	}
